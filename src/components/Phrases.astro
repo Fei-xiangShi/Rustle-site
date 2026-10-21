@@ -1,0 +1,13 @@
+---
+// CJK headings break only at their commas ("每个细节，" / "都恰到好处。");
+// Latin text is left to the browser's own wrapping.
+interface Props {
+  text: string;
+}
+
+const { text } = Astro.props;
+const cjk = /[㐀-鿿]/.test(text);
+const parts = cjk ? text.split(/(?<=[，、；：])/).filter(Boolean) : [text];
+---
+
+{cjk ? parts.map((p) => <span class="inline-block">{p}</span>) : text}

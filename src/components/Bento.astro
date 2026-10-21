@@ -1,0 +1,170 @@
+---
+import { getDict, type Locale } from '~/i18n';
+import Icon from './Icon.astro';
+import Phrases from './Phrases.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const t = getDict(Astro.props.locale);
+const b = t.bento;
+
+const palettes = [
+  { name: 'Ember', colors: ['#b4471f', '#e39a4f', '#5a1d14', '#f2c47a', '#7c2d3a'] },
+  { name: 'Tide', colors: ['#0f3d5c', '#1f7a8c', '#0a1f33', '#5fb3c4', '#2c2a6b'] },
+  { name: 'Bloom', colors: ['#8e2a5c', '#e0648f', '#2b0f2a', '#f3a6b8', '#5b2a86'] },
+  { name: 'Moss', colors: ['#2f4a2a', '#7d9a52', '#141f12', '#d6c27a', '#3d5c5a'] },
+];
+const coverStyle = (c: string[]) =>
+  `background: radial-gradient(70% 70% at 25% 25%, ${c[3]}, transparent 65%), radial-gradient(80% 80% at 80% 80%, ${c[4]}, transparent 70%), linear-gradient(135deg, ${c[0]}, ${c[2]});`;
+
+const osIcons: Record<string, string> = { Windows: 'windows-logo', macOS: 'apple-logo', Linux: 'linux-logo' };
+---
+
+<section id="features" class="container-x py-24 md:py-32">
+  <div class="max-w-3xl">
+    <p data-reveal class="kicker">{b.kicker}</p>
+    <h2 data-reveal class="section-title mt-6"><Phrases text={b.title} /></h2>
+  </div>
+
+  <div class="mt-14 grid grid-cols-1 gap-4 md:grid-cols-6 lg:grid-cols-12 lg:gap-5">
+    <!-- Flowing background -->
+    <article data-reveal data-flow-card data-spotlight class="surface group flex min-h-[30rem] flex-col overflow-hidden md:col-span-6 lg:col-span-8 lg:row-span-2">
+      <canvas class="absolute inset-0 size-full opacity-0 transition-opacity duration-1000 data-[ready]:opacity-100" aria-hidden="true"></canvas>
+      <div class="absolute inset-0 bg-[linear-gradient(180deg,rgb(11_8_7/0.15),rgb(11_8_7/0.25)_45%,rgb(11_8_7/0.82))]" aria-hidden="true"></div>
+      <div class="relative mt-auto p-7 md:p-10">
+        <h3 class="font-display text-[clamp(1.8rem,3vw,2.6rem)] leading-tight">{b.flow.title}</h3>
+        <p class="mt-3 max-w-lg leading-relaxed text-paper/75">{b.flow.desc}</p>
+        <div class="mt-7 flex flex-wrap items-center gap-4">
+          <div class="flex gap-2.5" role="group" aria-label={b.flow.hint}>
+            {
+              palettes.map((p, i) => (
+                <button
+                  type="button"
+                  data-palette={JSON.stringify(p.colors)}
+                  aria-pressed={i === 0 ? 'true' : 'false'}
+                  aria-label={p.name}
+                  title={p.name}
+                  class="swatch size-12 rounded-lg ring-1 ring-white/15 transition duration-500 hover:-translate-y-0.5 md:size-14"
+                  style={coverStyle(p.colors)}
+                />
+              ))
+            }
+          </div>
+          <span class="text-xs text-paper/55">{b.flow.hint}</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- Native -->
+    <article data-reveal data-spotlight class="surface flex flex-col p-7 md:col-span-3 lg:col-span-4">
+      <div class="stack relative h-32" aria-hidden="true">
+        {
+          ['wgpu', 'iced', 'Rust'].map((label, i) => (
+            <div
+              class="absolute inset-x-0 flex h-11 items-center justify-between rounded-xl px-4 font-mono text-xs ring-1 ring-white/10 backdrop-blur"
+              style={`top:${i * 2.4}rem; background: linear-gradient(90deg, rgb(240 163 94 / ${0.08 + i * 0.08}), rgb(255 255 255 / 0.03)); transform: translateX(${(2 - i) * 0.6}rem) scale(${0.92 + i * 0.04});`}
+            >
+              <span>{label}</span>
+              <span class="text-faint">{['GPU', 'UI', 'Core'][i]}</span>
+            </div>
+          ))
+        }
+      </div>
+      <h3 class="mt-7 text-xl font-semibold">{b.native.title}</h3>
+      <p class="mt-2 text-sm leading-relaxed text-soft">{b.native.desc}</p>
+      <div class="mt-5 flex flex-wrap gap-2">
+        {['Vulkan', 'Metal', 'DirectX 12'].map((x) => <span class="chip font-mono !text-[0.72rem]">{x}</span>)}
+      </div>
+    </article>
+
+    <!-- System integration -->
+    <article data-reveal data-spotlight class="surface flex flex-col p-7 md:col-span-3 lg:col-span-4">
+      <h3 class="text-xl font-semibold">{b.system.title}</h3>
+      <p class="mt-2 text-sm leading-relaxed text-soft">{b.system.desc}</p>
+      <ul class="mt-6 space-y-2.5">
+        {
+          b.system.rows.map(([os, api]) => (
+            <li class="flex items-center gap-3 rounded-xl bg-white/[0.03] px-4 py-3 ring-1 ring-white/[0.06]">
+              <Icon name={osIcons[os]} size={18} class="text-amber" />
+              <span class="text-sm font-medium">{os}</span>
+              <span class="ml-auto text-xs text-faint">{api}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </article>
+
+    <!-- Discord -->
+    <article data-reveal data-spotlight class="surface flex flex-col p-7 md:col-span-3 lg:col-span-4">
+      <div class="rounded-2xl bg-[#1e1f22]/80 p-4 ring-1 ring-white/[0.06]" aria-hidden="true">
+        <p class="text-[0.65rem] font-semibold tracking-wide text-white/50 uppercase">Listening to Rustle</p>
+        <div class="mt-3 flex items-center gap-3">
+          <div class="size-12 shrink-0 rounded-lg" style={coverStyle(palettes[0].colors)}></div>
+          <div class="min-w-0 text-xs leading-snug">
+            <p class="truncate font-semibold text-white">Leaves in Motion</p>
+            <p class="truncate text-white/60">by Rustle Ensemble</p>
+            <div class="mt-2 h-1 w-28 overflow-hidden rounded-full bg-white/15"><div class="h-full w-3/5 rounded-full bg-white/80"></div></div>
+          </div>
+        </div>
+      </div>
+      <h3 class="mt-6 flex items-center gap-2 text-xl font-semibold">
+        <Icon name="discord-logo" size={20} class="text-[#8b93ff]" />{b.discord.title}
+      </h3>
+      <p class="mt-2 text-sm leading-relaxed text-soft">{b.discord.desc}</p>
+    </article>
+
+    <!-- Hotkeys -->
+    <article data-reveal data-spotlight class="surface flex flex-col p-7 md:col-span-3 lg:col-span-4">
+      <div class="flex h-[6.1rem] items-center justify-center gap-2" aria-hidden="true">
+        <kbd class="keycap !h-12 !min-w-14">Ctrl</kbd>
+        <span class="text-faint">+</span>
+        <kbd class="keycap !h-12 !min-w-14">Alt</kbd>
+        <span class="text-faint">+</span>
+        <kbd class="keycap !h-12 !min-w-24">Space</kbd>
+      </div>
+      <h3 class="mt-6 text-xl font-semibold">{b.hotkeys.title}</h3>
+      <p class="mt-2 text-sm leading-relaxed text-soft">{b.hotkeys.desc}</p>
+    </article>
+
+    <!-- Deep links -->
+    <article data-reveal data-spotlight class="surface flex flex-col p-7 md:col-span-6 lg:col-span-4">
+      <div class="space-y-2 font-mono text-[0.78rem]" aria-hidden="true">
+        <div class="rounded-xl bg-black/30 px-4 py-3 ring-1 ring-white/[0.06]">
+          <span class="text-amber">rustle://</span><span class="text-paper/85">song/</span><span class="text-faint">&lt;id&gt;</span><span class="text-paper/85">?action=play</span>
+        </div>
+        <div class="rounded-xl bg-black/30 px-4 py-3 ring-1 ring-white/[0.06]">
+          <span class="text-amber">rustle://</span><span class="text-paper/85">search?q=</span><span class="text-faint">…</span>
+        </div>
+      </div>
+      <h3 class="mt-6 text-xl font-semibold">{b.deeplink.title}</h3>
+      <p class="mt-2 text-sm leading-relaxed text-soft">{b.deeplink.desc}</p>
+    </article>
+
+    {
+      [
+        { card: b.encoding, icon: 'text-aa' },
+        { card: b.network, icon: 'globe-simple' },
+        { card: b.power, icon: 'feather' },
+        { card: b.language, icon: 'translate' },
+      ].map(({ card, icon }) => (
+        <article data-reveal data-spotlight class="surface flex flex-col p-7 md:col-span-3 lg:col-span-3">
+          <span class="inline-flex size-10 items-center justify-center rounded-xl bg-white/[0.05] text-amber ring-1 ring-white/[0.08]">
+            <Icon name={icon} size={20} />
+          </span>
+          <h3 class="mt-6 font-semibold">{card.title}</h3>
+          <p class="mt-2 text-sm leading-relaxed text-soft">{card.desc}</p>
+        </article>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .swatch[aria-pressed='true'] {
+    box-shadow:
+      0 0 0 2px var(--color-ink-950),
+      0 0 0 3.5px rgb(255 244 232 / 0.9);
+  }
+</style>

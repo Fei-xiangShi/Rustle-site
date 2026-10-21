@@ -1,0 +1,21 @@
+---
+import { getDict, type Locale } from '~/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const text = getDict(locale).manifesto;
+// CJK lights up per character, Latin per word — like a lyric line being sung.
+const parts = locale === 'zh' ? [...text] : text.split(/(\s+)/);
+---
+
+<section class="container-x py-28 md:py-44">
+  <p
+    data-manifesto
+    class="font-display mx-auto max-w-[62rem] text-center text-[clamp(2rem,4.8vw,4.1rem)] leading-[1.18]"
+  >
+    {parts.map((p) => (/^\s+$/.test(p) ? ' ' : <span data-m>{p}</span>))}
+  </p>
+</section>

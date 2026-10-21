@@ -1,0 +1,91 @@
+---
+import '~/styles/global.css';
+import { Font } from 'astro:assets';
+import { GITHUB_URL, SITE } from '~/config/site';
+import { getDict, type Locale } from '~/i18n';
+
+interface Props {
+  locale: Locale;
+  title?: string;
+  description?: string;
+  version?: string;
+  downloadUrl?: string;
+  noindex?: boolean;
+}
+
+const { locale, title, description, version, downloadUrl, noindex = false } = Astro.props;
+const t = getDict(locale);
+const pageTitle = title ?? t.meta.title;
+const desc = description ?? t.meta.description;
+const site = Astro.site ?? new URL('https://rustle.fxs.life');
+const canonical = new URL(Astro.url.pathname, site);
+const zhUrl = new URL('/', site);
+const enUrl = new URL('/en/', site);
+const ogImage = new URL('/og.png', site);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: SITE.name,
+  description: desc,
+  url: canonical.href,
+  image: ogImage.href,
+  applicationCategory: 'MultimediaApplication',
+  operatingSystem: 'Windows, macOS, Linux',
+  ...(version ? { softwareVersion: version } : {}),
+  ...(downloadUrl ? { downloadUrl } : {}),
+  license: 'https://www.gnu.org/licenses/agpl-3.0.html',
+  codeRepository: GITHUB_URL,
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+};
+---
+
+<!doctype html>
+<html lang={t.lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={desc} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="zh-CN" href={zhUrl} />
+    <link rel="alternate" hreflang="en" href={enUrl} />
+    <link rel="alternate" hreflang="x-default" href={zhUrl} />
+
+    <meta name="theme-color" content="#0b0807" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content={locale === 'zh' ? 'zh_CN' : 'en_US'} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={desc} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <Font cssVariable="--font-instrument" preload={[{ subset: 'latin', style: 'normal' }]} />
+    <Font cssVariable="--font-geist" preload={[{ subset: 'latin' }]} />
+    <Font cssVariable="--font-geist-mono" />
+    <Font cssVariable="--font-noto-serif-sc" preload={locale === 'zh'} />
+
+    <script is:inline>
+      document.documentElement.classList.add('js');
+    </script>
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  </head>
+  <body>
+    <slot />
+    <div class="grain" aria-hidden="true"></div>
+  </body>
+</html>

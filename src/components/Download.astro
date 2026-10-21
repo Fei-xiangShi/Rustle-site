@@ -1,0 +1,195 @@
+---
+import { RELEASES_URL, SITE } from '~/config/site';
+import { getDict, type Locale } from '~/i18n';
+import { formatSize, type ReleaseInfo } from '~/lib/release';
+import Icon from './Icon.astro';
+import Phrases from './Phrases.astro';
+
+interface Props {
+  locale: Locale;
+  release: ReleaseInfo;
+}
+
+const { locale, release } = Astro.props;
+const d = getDict(locale).download;
+const p = d.platforms;
+const date = release.publishedAt
+  ? new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en-US', { dateStyle: 'medium' }).format(new Date(release.publishedAt))
+  : null;
+
+const cards = [
+  {
+    key: 'windows',
+    icon: 'windows-logo',
+    copy: p.windows,
+    primary: release.assets.windowsMsi,
+    secondary: { href: release.assets.windowsExe.url, size: formatSize(release.assets.windowsExe.size) },
+  },
+  {
+    key: 'macos',
+    icon: 'apple-logo',
+    copy: p.macos,
+    primary: release.assets.macArm,
+    secondary: { href: release.assets.macIntel.url, size: formatSize(release.assets.macIntel.size) },
+  },
+  {
+    key: 'linux',
+    icon: 'linux-logo',
+    copy: p.linux,
+    primary: release.assets.linux,
+    secondary: { href: 'https://aur.archlinux.org/packages/rustle-bin', size: null },
+  },
+];
+
+const packages = [
+  { label: d.packages.winget, cmd: SITE.winget },
+  { label: d.packages.aurBin, cmd: SITE.aurBin },
+  { label: d.packages.aurSource, cmd: SITE.aurSource },
+];
+---
+
+<section id="download" class="relative overflow-hidden py-24 md:py-36">
+  <div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-full bg-[radial-gradient(60%_45%_at_50%_0%,rgb(224_100_60/0.16),transparent_70%)]" aria-hidden="true"></div>
+  <div class="container-x">
+    <div class="mx-auto max-w-2xl text-center">
+      <p data-reveal class="kicker">{d.kicker}</p>
+      <h2 data-reveal class="section-title mt-6"><Phrases text={d.title} /></h2>
+      <p data-reveal class="mt-6 text-lg text-soft">{d.body}</p>
+      <p data-reveal class="mt-6 inline-flex items-center gap-2 rounded-full bg-white/[0.04] px-4 py-1.5 font-mono text-xs text-soft ring-1 ring-white/[0.08]">
+        <span class="size-1.5 rounded-full bg-[#7ee2a8] shadow-[0_0_10px_2px_rgb(126_226_168/0.6)]"></span>
+        {d.latest} v{release.version}{date && <span class="text-faint">· {d.released} {date}</span>}
+      </p>
+    </div>
+
+    <div class="mt-16 grid gap-4 md:grid-cols-3 lg:gap-5">
+      {
+        cards.map((c) => {
+          const size = formatSize(c.primary.size);
+          return (
+            <article data-reveal data-spotlight data-platform={c.key} class="platform surface flex flex-col p-7 md:p-8">
+              <div class="flex items-start justify-between">
+                <span class="inline-flex size-14 items-center justify-center rounded-2xl bg-white/[0.05] ring-1 ring-white/[0.08]">
+                  <Icon name={c.icon} size={28} />
+                </span>
+                <span class="badge rounded-full bg-amber/15 px-3 py-1 text-[0.7rem] text-amber ring-1 ring-amber/30">{d.recommended}</span>
+              </div>
+              <h3 class="mt-7 text-2xl font-semibold">{c.copy.name}</h3>
+              <p class="mt-1 text-sm text-faint">{c.copy.req}</p>
+              <div class="mt-auto pt-10">
+                <a href={c.primary.url} class="btn btn-ghost dl-primary w-full !justify-between !px-5">
+                  <span class="flex items-center gap-2.5">
+                    <Icon name="download-simple" size={17} />
+                    {c.copy.primary}
+                  </span>
+                  {size && <span class="font-mono text-xs opacity-60">{size}</span>}
+                </a>
+                <a
+                  href={c.secondary.href}
+                  {...(c.key === 'linux' ? { target: '_blank', rel: 'noopener' } : {})}
+                  class="mt-2 flex h-11 items-center justify-between rounded-full px-5 text-sm text-soft transition-colors hover:bg-white/[0.04] hover:text-paper"
+                >
+                  <span>{c.copy.secondary}</span>
+                  {c.secondary.size ? (
+                    <span class="font-mono text-xs text-faint">{c.secondary.size}</span>
+                  ) : (
+                    <Icon name="arrow-up-right" size={14} class="text-faint" />
+                  )}
+                </a>
+              </div>
+            </article>
+          );
+        })
+      }
+    </div>
+
+    <div data-reveal class="surface mt-5 p-6 md:p-8">
+      <p class="font-mono text-[0.7rem] tracking-[0.16em] text-faint uppercase">{d.packages.title}</p>
+      <ul class="mt-5 grid gap-3 lg:grid-cols-3">
+        {
+          packages.map((pkg) => (
+            <li class="flex items-center gap-3 rounded-2xl bg-black/25 py-2.5 pr-2.5 pl-5 ring-1 ring-white/[0.06]">
+              <div class="min-w-0 flex-1">
+                <p class="text-[0.7rem] text-faint">{pkg.label}</p>
+                <code class="mt-0.5 block truncate font-mono text-[0.82rem]">
+                  <span class="text-amber select-none">$ </span>
+                  {pkg.cmd}
+                </code>
+              </div>
+              <button
+                type="button"
+                data-copy={pkg.cmd}
+                data-label-copy={d.copy}
+                data-label-copied={d.copied}
+                aria-label={d.copy}
+                class="copy inline-flex size-9 shrink-0 items-center justify-center rounded-xl text-soft transition hover:bg-white/[0.06] hover:text-paper"
+              >
+                <Icon name="copy" size={16} class="i-copy" />
+                <Icon name="check" size={16} class="i-check text-[#7ee2a8]" />
+              </button>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    <div data-reveal class="mt-8 flex flex-col items-center gap-5 text-center">
+      <p class="flex max-w-3xl items-start gap-2.5 text-left text-xs leading-relaxed text-faint">
+        <Icon name="info" size={15} class="mt-px shrink-0" />
+        {d.note}
+      </p>
+      <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
+        <a href={RELEASES_URL.replace('/latest', '')} target="_blank" rel="noopener" class="link">{d.allReleases}</a>
+        {release.checksumsUrl && <a href={release.checksumsUrl} class="link">{d.checksums}</a>}
+        <a href="#source" class="link">{getDict(locale).source.build}</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .badge {
+    opacity: 0;
+    transform: translateY(-4px);
+    transition:
+      opacity 0.5s ease,
+      transform 0.6s var(--ease-out-expo);
+  }
+  .platform[data-recommended] .badge {
+    opacity: 1;
+    transform: none;
+  }
+  .platform[data-recommended] {
+    box-shadow:
+      inset 0 0 0 1px rgb(240 163 94 / 0.35),
+      0 30px 80px -40px rgb(240 163 94 / 0.45);
+  }
+  .platform[data-recommended] .dl-primary {
+    color: #1a0f08;
+    background: linear-gradient(180deg, #fff4e6, #f6d7b0);
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.5) inset,
+      0 10px 30px -10px rgb(240 163 94 / 0.65);
+  }
+
+  .copy .i-check,
+  .copy[data-copied] .i-copy {
+    display: none;
+  }
+  .copy[data-copied] .i-check {
+    display: block;
+  }
+
+  .link {
+    color: color-mix(in oklab, var(--color-paper) 70%, transparent);
+    text-decoration: underline;
+    text-decoration-color: rgb(255 240 225 / 0.2);
+    text-underline-offset: 5px;
+    transition:
+      color 0.3s ease,
+      text-decoration-color 0.3s ease;
+  }
+  .link:hover {
+    color: var(--color-paper);
+    text-decoration-color: var(--color-amber);
+  }
+</style>

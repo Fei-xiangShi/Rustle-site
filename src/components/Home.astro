@@ -1,0 +1,51 @@
+---
+import Base from '~/layouts/Base.astro';
+import type { Locale } from '~/i18n';
+import { getRelease } from '~/lib/release';
+import AudioSection from './AudioSection.astro';
+import Bento from './Bento.astro';
+import Download from './Download.astro';
+import Footer from './Footer.astro';
+import Gallery from './Gallery.astro';
+import Hero from './Hero.astro';
+import LibrarySection from './LibrarySection.astro';
+import LyricsSection from './LyricsSection.astro';
+import Manifesto from './Manifesto.astro';
+import Nav from './Nav.astro';
+import OpenSource from './OpenSource.astro';
+import Shortcuts from './Shortcuts.astro';
+import Stats from './Stats.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const release = await getRelease();
+---
+
+<Base locale={locale} version={release.version} downloadUrl={release.pageUrl}>
+  <Nav locale={locale} />
+  <main>
+    <Hero locale={locale} release={release} />
+    <Stats locale={locale} />
+    <LyricsSection locale={locale} />
+    <Manifesto locale={locale} />
+    <Bento locale={locale} />
+    <AudioSection locale={locale} />
+    <LibrarySection locale={locale} />
+    <Gallery locale={locale} />
+    <Shortcuts locale={locale} />
+    <Download locale={locale} release={release} />
+    <OpenSource locale={locale} />
+  </main>
+  <Footer locale={locale} />
+</Base>
+
+<script>
+  import { initMotion } from '~/scripts/motion';
+  import { initUi } from '~/scripts/ui';
+
+  initUi();
+  initMotion();
+</script>

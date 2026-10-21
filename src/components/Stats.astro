@@ -1,0 +1,31 @@
+---
+import { getDict, type Locale } from '~/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const t = getDict(Astro.props.locale);
+---
+
+<section class="container-x pt-16 pb-8 md:pt-24" aria-label="Rustle in numbers">
+  <dl class="grid grid-cols-2 gap-y-10 border-y hairline py-10 sm:grid-cols-3 lg:grid-cols-5 lg:py-12">
+    {
+      t.stats.map((s, i) => (
+        <div
+          data-reveal
+          class:list={[
+            'flex flex-col items-center gap-2 text-center lg:border-l lg:hairline',
+            i === 0 && 'lg:border-l-0',
+            i === t.stats.length - 1 && 'col-span-2 sm:col-span-1',
+          ]}
+        >
+          <dt class="order-2 text-[0.82rem] text-faint">{s.label}</dt>
+          <dd class="order-1 font-sans text-[clamp(2.4rem,4.2vw,3.5rem)] leading-none font-extralight tracking-[-0.045em] tabular-nums">
+            <span data-count={s.value}>{s.value}</span>
+          </dd>
+        </div>
+      ))
+    }
+  </dl>
+</section>

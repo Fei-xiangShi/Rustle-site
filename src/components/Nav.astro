@@ -1,0 +1,155 @@
+---
+import { Image } from 'astro:assets';
+import icon from '~/assets/icon.png';
+import { GITHUB_URL } from '~/config/site';
+import { getDict, homePath, type Locale } from '~/i18n';
+import Icon from './Icon.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = getDict(locale);
+const other: Locale = locale === 'zh' ? 'en' : 'zh';
+const links = [
+  { href: '#lyrics', label: t.nav.lyrics },
+  { href: '#features', label: t.nav.features },
+  { href: '#audio', label: t.nav.audio },
+  { href: '#library', label: t.nav.library },
+  { href: '#download', label: t.nav.download },
+];
+---
+
+<header data-nav class="nav fixed inset-x-0 top-0 z-50">
+  <div class="container-x flex h-16 items-center justify-between gap-6">
+    <a href={homePath(locale)} class="group flex items-center gap-2.5" aria-label="Rustle">
+      <Image src={icon} alt="" width={64} height={64} class="size-8 rounded-[9px] transition-transform duration-700 ease-[var(--ease-out-expo)] group-hover:rotate-[-8deg]" />
+      <span class="font-display text-[1.45rem] leading-none tracking-tight">Rustle</span>
+    </a>
+
+    <nav class="hidden items-center gap-1 md:flex" aria-label="Primary">
+      {
+        links.map((l) => (
+          <a href={l.href} class="rounded-full px-3.5 py-2 text-sm text-soft transition-colors hover:bg-white/[0.05] hover:text-paper">
+            {l.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="flex items-center gap-1.5">
+      <a
+        href={homePath(other)}
+        hreflang={other === 'zh' ? 'zh-CN' : 'en'}
+        title={t.nav.switchTitle}
+        class="hidden h-9 min-w-9 items-center justify-center rounded-full px-2.5 font-mono text-xs text-soft transition-colors hover:bg-white/[0.06] hover:text-paper sm:inline-flex"
+      >
+        {t.nav.switchLabel}
+      </a>
+      <a
+        href={GITHUB_URL}
+        target="_blank"
+        rel="noopener"
+        class="hidden size-9 items-center justify-center rounded-full text-soft transition-colors hover:bg-white/[0.06] hover:text-paper sm:inline-flex"
+      >
+        <Icon name="github-logo" size={19} label="GitHub" />
+      </a>
+      <a href="#download" class="btn btn-primary ml-1.5 !h-9 !px-4 !text-[0.85rem]">
+        <Icon name="download-simple" size={15} />
+        {t.nav.download}
+      </a>
+      <button
+        type="button"
+        data-menu-toggle
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        class="ml-1 inline-flex size-9 items-center justify-center rounded-full text-paper hover:bg-white/[0.06] md:hidden"
+      >
+        <span class="sr-only">{t.nav.menu}</span>
+        <span class="menu-icon" aria-hidden="true"><span></span><span></span></span>
+      </button>
+    </div>
+  </div>
+
+  <div id="mobile-menu" data-menu class="mobile-menu md:hidden">
+    <nav class="container-x flex flex-col py-4" aria-label="Mobile">
+      {
+        links.map((l) => (
+          <a href={l.href} class="font-display border-b hairline py-4 text-3xl">
+            {l.label}
+          </a>
+        ))
+      }
+      <div class="flex items-center gap-3 pt-6">
+        <a href={homePath(other)} class="chip">{t.nav.switchLabel === 'EN' ? 'English' : '简体中文'}</a>
+        <a href={GITHUB_URL} target="_blank" rel="noopener" class="chip gap-2"><Icon name="github-logo" /> GitHub</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .nav {
+    transition:
+      background-color 0.5s ease,
+      backdrop-filter 0.5s ease,
+      box-shadow 0.5s ease;
+  }
+  .nav[data-scrolled],
+  :global(html[data-menu-open]) .nav {
+    background-color: rgb(11 8 7 / 0.72);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    box-shadow: inset 0 -1px 0 rgb(255 240 225 / 0.07);
+  }
+
+  .menu-icon {
+    position: relative;
+    display: block;
+    width: 18px;
+    height: 10px;
+  }
+  .menu-icon span {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 1.5px;
+    border-radius: 2px;
+    background: currentColor;
+    transition:
+      transform 0.45s var(--ease-out-expo),
+      top 0.45s var(--ease-out-expo);
+  }
+  .menu-icon span:first-child {
+    top: 0;
+  }
+  .menu-icon span:last-child {
+    top: 8.5px;
+  }
+  [aria-expanded='true'] .menu-icon span:first-child {
+    top: 4.25px;
+    transform: rotate(45deg);
+  }
+  [aria-expanded='true'] .menu-icon span:last-child {
+    top: 4.25px;
+    transform: rotate(-45deg);
+  }
+
+  .mobile-menu {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.6s var(--ease-out-expo);
+  }
+  .mobile-menu > nav {
+    overflow: hidden;
+    min-height: 0;
+  }
+  .mobile-menu:not([data-open]) > nav {
+    padding-block: 0;
+  }
+  .mobile-menu[data-open] {
+    grid-template-rows: 1fr;
+    height: calc(100dvh - 4rem);
+  }
+</style>

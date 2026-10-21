@@ -1,0 +1,127 @@
+---
+import { Picture } from 'astro:assets';
+import lyrics from '~/assets/screenshots/lyrics_page.png';
+import playlist from '~/assets/screenshots/playlist.png';
+import settings from '~/assets/screenshots/settings_page.png';
+import { getDict, type Locale } from '~/i18n';
+import Phrases from './Phrases.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const t = getDict(Astro.props.locale);
+const g = t.gallery;
+const images = { lyrics, playlist, settings } as const;
+---
+
+<section class="container-x py-24 md:py-32">
+  <div data-tabs>
+    <div class="flex flex-wrap items-end justify-between gap-8">
+      <div class="max-w-3xl">
+        <p data-reveal class="kicker">{g.kicker}</p>
+        <h2 data-reveal class="section-title mt-6"><Phrases text={g.title} /></h2>
+      </div>
+      <div data-reveal role="tablist" aria-label={g.kicker} class="inline-flex rounded-full bg-white/[0.04] p-1 ring-1 ring-white/[0.08]">
+        {
+          g.tabs.map((tab, i) => (
+            <button
+              type="button"
+              role="tab"
+              id={`shot-tab-${tab.key}`}
+              aria-controls={`shot-panel-${tab.key}`}
+              aria-selected={i === 0 ? 'true' : 'false'}
+              tabindex={i === 0 ? 0 : -1}
+              class="tab"
+            >
+              {tab.label}
+            </button>
+          ))
+        }
+      </div>
+    </div>
+
+    <div data-reveal class="relative mt-12">
+      <div class="absolute -inset-x-[4%] top-[10%] -bottom-[6%] -z-10 rounded-[50%] bg-[radial-gradient(closest-side,rgb(240_140_80/0.18),transparent)] blur-3xl" aria-hidden="true"></div>
+      <div class="frame relative grid overflow-hidden rounded-[clamp(0.75rem,1.6vw,1.4rem)] bg-ink-900 shadow-[0_40px_100px_-30px_rgb(0_0_0/0.8),0_0_0_1px_rgb(255_240_225/0.1)]">
+        {
+          g.tabs.map((tab, i) => (
+            <figure
+              role="tabpanel"
+              id={`shot-panel-${tab.key}`}
+              aria-labelledby={`shot-tab-${tab.key}`}
+              data-active={i === 0 ? '' : undefined}
+              class="panel [grid-area:1/1]"
+            >
+              <Picture
+                src={images[tab.key as keyof typeof images]}
+                formats={['avif', 'webp']}
+                widths={[640, 960, 1280, 1600, 1908]}
+                sizes="(min-width: 1280px) 1200px, 92vw"
+                alt={tab.caption}
+                class="block h-auto w-full"
+              />
+              <figcaption class="sr-only">{tab.caption}</figcaption>
+            </figure>
+          ))
+        }
+      </div>
+      <div class="mt-6 grid text-center text-sm text-soft">
+        {
+          g.tabs.map((tab) => (
+            <p class="caption [grid-area:1/1]" data-for={tab.key} aria-hidden="true">
+              {tab.caption}
+            </p>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .tab {
+    height: 2.4rem;
+    padding-inline: 1.25rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    color: color-mix(in oklab, var(--color-paper) 60%, transparent);
+    transition:
+      background-color 0.35s ease,
+      color 0.35s ease;
+  }
+  .tab[aria-selected='true'] {
+    color: var(--color-ink-950);
+    background: var(--color-paper);
+  }
+  .tab:hover:not([aria-selected='true']) {
+    color: var(--color-paper);
+  }
+
+  .panel {
+    opacity: 0;
+    transform: scale(1.015);
+    filter: blur(6px);
+    transition:
+      opacity 0.7s var(--ease-out-quint),
+      transform 1s var(--ease-out-expo),
+      filter 0.7s var(--ease-out-quint);
+    pointer-events: none;
+  }
+  .panel[data-active] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    pointer-events: auto;
+  }
+
+  .caption {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  [data-tabs]:has(#shot-panel-lyrics[data-active]) .caption[data-for='lyrics'],
+  [data-tabs]:has(#shot-panel-playlist[data-active]) .caption[data-for='playlist'],
+  [data-tabs]:has(#shot-panel-settings[data-active]) .caption[data-for='settings'] {
+    opacity: 1;
+  }
+</style>

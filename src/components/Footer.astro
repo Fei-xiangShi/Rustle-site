@@ -1,0 +1,94 @@
+---
+import { Image } from 'astro:assets';
+import icon from '~/assets/icon.png';
+import { GITHUB_URL, ISSUES_URL, LICENSE_URL, RELEASES_URL } from '~/config/site';
+import { getDict, homePath, type Locale } from '~/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = getDict(locale);
+const f = t.footer;
+const other: Locale = locale === 'zh' ? 'en' : 'zh';
+
+const columns = [
+  {
+    title: f.product,
+    links: [
+      { label: t.nav.lyrics, href: '#lyrics' },
+      { label: t.nav.features, href: '#features' },
+      { label: t.nav.audio, href: '#audio' },
+      { label: t.nav.download, href: '#download' },
+    ],
+  },
+  {
+    title: f.resources,
+    links: [
+      { label: 'GitHub', href: GITHUB_URL, external: true },
+      { label: f.releases, href: RELEASES_URL.replace('/latest', ''), external: true },
+      { label: f.issues, href: ISSUES_URL, external: true },
+      { label: f.license, href: LICENSE_URL, external: true },
+    ],
+  },
+];
+---
+
+<footer class="relative overflow-hidden border-t hairline pt-20">
+  <div class="container-x">
+    <div class="grid gap-12 md:grid-cols-[1.4fr_1fr_1fr]">
+      <div>
+        <a href={homePath(locale)} class="inline-flex items-center gap-3">
+          <Image src={icon} alt="" width={80} height={80} class="size-10 rounded-[11px]" />
+          <span class="font-display text-3xl">Rustle</span>
+        </a>
+        <p class="mt-4 text-soft">{f.tagline}</p>
+        <a href={homePath(other)} class="chip mt-6">{other === 'en' ? 'English' : '简体中文'}</a>
+      </div>
+      {
+        columns.map((col) => (
+          <div>
+            <p class="font-mono text-[0.7rem] tracking-[0.16em] text-faint uppercase">{col.title}</p>
+            <ul class="mt-5 space-y-3 text-sm">
+              {col.links.map((l) => (
+                <li>
+                  <a
+                    href={l.href}
+                    {...('external' in l ? { target: '_blank', rel: 'noopener' } : {})}
+                    class="text-soft transition-colors hover:text-paper"
+                  >
+                    {l.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+
+    <p class="mt-16 max-w-3xl text-xs leading-relaxed text-faint">{f.disclaimer}</p>
+    <div class="mt-6 flex flex-wrap items-center justify-between gap-4 border-t hairline py-6 text-xs text-faint">
+      <span>© {new Date().getFullYear()} Rustle · AGPL-3.0-or-later</span>
+      <span>{f.madeWith}</span>
+    </div>
+  </div>
+
+  <div class="wordmark pointer-events-none select-none" aria-hidden="true">Rustle</div>
+</footer>
+
+<style>
+  .wordmark {
+    font-family: var(--font-display);
+    font-size: clamp(7rem, 27vw, 26rem);
+    line-height: 0.75;
+    letter-spacing: -0.04em;
+    text-align: center;
+    margin-bottom: -0.12em;
+    background: linear-gradient(180deg, rgb(246 239 231 / 0.09), rgb(246 239 231 / 0));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+</style>

@@ -1,0 +1,263 @@
+---
+import { getDict, type Locale } from '~/i18n';
+import { bandX, EQ_BANDS, EQ_PRESETS, EQ_VIEW } from '~/scripts/audio-engine';
+import Icon from './Icon.astro';
+import Phrases from './Phrases.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const t = getDict(Astro.props.locale);
+const a = t.audio;
+const presetNames = a.presets as Record<string, string>;
+const freqLabel = (f: number) => (f >= 1000 ? `${f / 1000}k` : String(f));
+const spectrumTicks = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000].map((f) => ({
+  label: freqLabel(f),
+  left: (Math.log(f / 20) / Math.log(1000)) * 100,
+}));
+const gridGains = [12, 6, 0, -6, -12];
+const y = (g: number) => EQ_VIEW.mid - (g / EQ_VIEW.max) * EQ_VIEW.half;
+const featureIcons = ['shuffle', 'speaker-hifi', 'waveform', 'cloud-arrow-down', 'plugs-connected', 'queue'];
+---
+
+<section id="audio" class="relative py-24 md:py-36">
+  <div class="pointer-events-none absolute inset-x-0 top-1/3 -z-10 h-[60%] bg-[radial-gradient(50%_50%_at_50%_50%,rgb(224_100_60/0.12),transparent)]" aria-hidden="true"></div>
+  <div class="container-x">
+    <div class="mx-auto max-w-3xl text-center">
+      <p data-reveal class="kicker">{a.kicker}</p>
+      <h2 data-reveal class="section-title mt-6"><Phrases text={a.title} /></h2>
+      <p data-reveal class="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-soft">{a.body}</p>
+    </div>
+
+    <div data-reveal data-audio-engine class="surface mt-16 overflow-hidden p-5 sm:p-8 md:mt-20 md:p-10">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <span class="inline-flex size-9 items-center justify-center rounded-xl bg-white/[0.05] text-amber ring-1 ring-white/[0.08]">
+            <Icon name="equalizer" size={18} />
+          </span>
+          <span class="font-medium">{a.panel.title}</span>
+        </div>
+        <div class="inline-flex rounded-full bg-white/[0.04] p-1 ring-1 ring-white/[0.08]" role="group" aria-label={a.panel.spectrum}>
+          <button type="button" data-mode="bars" aria-pressed="true" class="seg">{a.panel.bars}</button>
+          <button type="button" data-mode="line" aria-pressed="false" class="seg">{a.panel.line}</button>
+        </div>
+      </div>
+
+      <!-- Spectrum + meters -->
+      <div class="mt-8 grid grid-cols-[minmax(0,1fr)_auto] gap-5 md:gap-8">
+        <div>
+          <p class="mb-3 font-mono text-[0.7rem] tracking-[0.16em] text-faint uppercase">{a.panel.spectrum} · 4096 FFT</p>
+          <canvas data-spectrum class="block h-48 w-full md:h-60" aria-hidden="true"></canvas>
+          <div class="relative mt-2 h-4 font-mono text-[0.62rem] text-faint" aria-hidden="true">
+            {
+              spectrumTicks.map((tick, i) => (
+                <span
+                  class:list={['absolute', i % 2 === 1 && 'max-sm:hidden']}
+                  style={`left:${tick.left}%; transform: translateX(${tick.left === 0 ? '0' : tick.left === 100 ? '-100%' : '-50%'})`}
+                >
+                  {tick.label}
+                </span>
+              ))
+            }
+          </div>
+        </div>
+        <div class="flex flex-col">
+          <p class="mb-3 font-mono text-[0.7rem] tracking-[0.16em] text-faint uppercase">{a.panel.meter}</p>
+          <div class="flex flex-1 gap-2">
+            {
+              ['L', 'R'].map((ch) => (
+                <div class="flex flex-col items-center gap-2">
+                  <div class="meter relative w-3 flex-1 overflow-hidden rounded-full bg-white/[0.06] md:w-3.5">
+                    <div data-meter-fill class="meter-fill absolute inset-0 origin-bottom" style="transform:scaleY(0)" />
+                    <div data-meter-peak class="absolute inset-x-0 h-[2px] bg-white/80" style="bottom:0" />
+                  </div>
+                  <span class="font-mono text-[0.62rem] text-faint">{ch}</span>
+                </div>
+              ))
+            }
+          </div>
+          <p data-meter-db class="mt-2 w-14 text-center font-mono text-[0.62rem] text-faint tabular-nums">-∞ dB</p>
+        </div>
+      </div>
+
+      <!-- Equalizer -->
+      <div class="mt-10 border-t hairline pt-8">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <p class="font-mono text-[0.7rem] tracking-[0.16em] text-faint uppercase">
+            {a.panel.eq} · <span data-preset-name data-custom={a.panel.custom} class="text-paper normal-case tracking-normal">{presetNames.pop}</span>
+          </p>
+          <label class="flex items-center gap-3 text-xs text-soft">
+            <span>{a.panel.preamp}</span>
+            <input data-preamp type="range" min="-12" max="12" step="0.5" value="0" class="range w-28 md:w-36" />
+            <output data-preamp-value class="w-14 text-right font-mono tabular-nums">0.0 dB</output>
+          </label>
+        </div>
+
+        <svg data-eq viewBox={`0 0 ${EQ_VIEW.width} ${EQ_VIEW.height}`} class="mt-4 block w-full touch-none select-none overflow-visible">
+          <defs>
+            <linearGradient id="eq-fill" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0" stop-color="#f0a35e" stop-opacity="0.24" />
+              <stop offset="1" stop-color="#e0643c" stop-opacity="0" />
+            </linearGradient>
+            <linearGradient id="eq-line" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0" stop-color="#f5cf8a" />
+              <stop offset="0.6" stop-color="#f0a35e" />
+              <stop offset="1" stop-color="#ff5c8a" />
+            </linearGradient>
+          </defs>
+          {
+            gridGains.map((g) => (
+              <g>
+                <line x1={EQ_VIEW.edgeL} x2={EQ_VIEW.edgeR} y1={y(g)} y2={y(g)} stroke="rgb(255 240 225)" stroke-opacity={g === 0 ? 0.16 : 0.06} stroke-dasharray={g === 0 ? undefined : '3 6'} />
+                <text x="0" y={y(g) + 4.5} class="eq-label">{g > 0 ? `+${g}` : g}</text>
+              </g>
+            ))
+          }
+          {EQ_BANDS.map((f, i) => <text x={bandX(i)} y={EQ_VIEW.height - 4} text-anchor="middle" class="eq-label">{freqLabel(f)}</text>)}
+          <path data-eq-fill fill="url(#eq-fill)" />
+          <path data-eq-line fill="none" stroke="url(#eq-line)" stroke-width="2.5" stroke-linecap="round" />
+          {
+            EQ_BANDS.map((f, i) => (
+              <g
+                data-band={i}
+                class="eq-handle"
+                tabindex="0"
+                role="slider"
+                aria-label={`${freqLabel(f)}Hz`}
+                aria-valuemin="-12"
+                aria-valuemax="12"
+                aria-valuenow={EQ_PRESETS.pop[i]}
+                transform={`translate(${bandX(i)} ${y(0)})`}
+              >
+                <circle r="22" fill="transparent" />
+                <circle r="7" class="eq-dot" />
+              </g>
+            ))
+          }
+          <g data-eq-tip class="pointer-events-none transition-opacity duration-200" style="opacity:0">
+            <rect x="-34" y="-15" width="68" height="24" rx="12" fill="#f6efe7" />
+            <text y="2" text-anchor="middle" class="eq-tip-text">0.0 dB</text>
+          </g>
+        </svg>
+        <p class="mt-1 text-center text-xs text-faint">{a.panel.dragHint}</p>
+
+        <div class="mt-6 flex flex-wrap justify-center gap-2">
+          {
+            Object.keys(EQ_PRESETS).map((key) => (
+              <button type="button" data-preset={key} aria-pressed={key === 'pop' ? 'true' : 'false'} class="preset chip cursor-pointer transition">
+                {presetNames[key]}
+              </button>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-14 grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        a.features.map((f, i) => (
+          <div data-reveal class="flex gap-4">
+            <span class="mt-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-amber ring-1 ring-white/[0.08]">
+              <Icon name={featureIcons[i]} size={19} />
+            </span>
+            <div>
+              <h3 class="font-semibold">{f.title}</h3>
+              <p class="mt-1.5 text-sm leading-relaxed text-soft">{f.desc}</p>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<script>
+  import { mountAudioEngine } from '~/scripts/audio-engine';
+
+  document.querySelectorAll<HTMLElement>('[data-audio-engine]').forEach((el) => mountAudioEngine(el));
+</script>
+
+<style>
+  .seg {
+    height: 2rem;
+    padding-inline: 0.95rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    color: color-mix(in oklab, var(--color-paper) 60%, transparent);
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
+  }
+  .seg[aria-pressed='true'] {
+    color: var(--color-ink-950);
+    background: var(--color-paper);
+  }
+
+  .meter-fill {
+    background: linear-gradient(0deg, #e0643c 0%, #f0a35e 55%, #f5cf8a 85%, #ff5c8a 100%);
+    background-size: 100% 100%;
+  }
+
+  .eq-label {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    fill: rgb(246 239 231 / 0.4);
+  }
+  .eq-tip-text {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    fill: #1a0f08;
+  }
+  .eq-handle {
+    cursor: ns-resize;
+    outline: none;
+  }
+  .eq-dot {
+    fill: var(--color-ink-950);
+    stroke: #f6efe7;
+    stroke-width: 2.5;
+    transition:
+      r 0.3s var(--ease-out-expo),
+      fill 0.3s ease;
+  }
+  .eq-handle:hover .eq-dot,
+  .eq-handle:focus-visible .eq-dot,
+  .eq-handle[data-dragging] .eq-dot {
+    r: 9.5;
+    fill: var(--color-amber);
+  }
+
+  .preset[aria-pressed='true'] {
+    color: var(--color-ink-950);
+    background: var(--color-paper);
+    box-shadow: none;
+  }
+  .preset:hover:not([aria-pressed='true']) {
+    background: rgb(255 244 232 / 0.08);
+  }
+
+  .range {
+    appearance: none;
+    height: 4px;
+    border-radius: 999px;
+    background: rgb(255 244 232 / 0.14);
+    cursor: pointer;
+  }
+  .range::-webkit-slider-thumb {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    background: var(--color-paper);
+    box-shadow: 0 0 0 4px rgb(240 163 94 / 0.25);
+  }
+  .range::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--color-paper);
+  }
+</style>

@@ -1,0 +1,164 @@
+---
+import { getDict, type Locale } from '~/i18n';
+import Icon from './Icon.astro';
+import Phrases from './Phrases.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const t = getDict(Astro.props.locale);
+const l = t.library;
+const audioFormats = ['mp3', 'flac', 'm4a', 'aac', 'ogg', 'opus', 'wav', 'wma', 'aiff'];
+const lyricFormats = ['LRC', 'LQE', 'YRC', 'QRC', 'KRC', 'ESLrc', 'LYS', 'TTML', 'ASS', 'SSA', 'SRT'];
+const tiers = l.cloud.tiers;
+---
+
+<section id="library" class="container-x py-24 md:py-32">
+  <div class="max-w-3xl">
+    <p data-reveal class="kicker">{l.kicker}</p>
+    <h2 data-reveal class="section-title mt-6"><Phrases text={l.title} /></h2>
+  </div>
+
+  <div class="mt-14 grid gap-4 lg:grid-cols-12 lg:gap-5">
+    <article data-reveal data-spotlight class="surface flex flex-col p-7 md:p-10 lg:col-span-7 lg:row-span-2">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex size-10 items-center justify-center rounded-xl bg-[#e60026]/15 text-[#ff5a6e] ring-1 ring-[#ff5a6e]/20">
+          <Icon name="cloud" size={20} />
+        </span>
+        <h3 class="text-2xl font-semibold">{l.cloud.title}</h3>
+      </div>
+      <p class="mt-4 max-w-xl leading-relaxed text-soft">{l.cloud.desc}</p>
+
+      <div class="mt-auto pt-12">
+        <p class="font-mono text-[0.7rem] tracking-[0.16em] text-faint uppercase">{l.cloud.qualityTitle}</p>
+        <ol class="tiers mt-6 grid h-64 grid-cols-9 items-end gap-1.5 sm:gap-2.5">
+          {
+            tiers.map((tier, i) => (
+              <li class="tier group flex h-full flex-col justify-end" style={`--i:${i}`}>
+                <span class="mb-2 text-center font-mono text-[0.55rem] text-faint opacity-0 transition-opacity duration-300 group-hover:opacity-100 max-sm:hidden">
+                  {tier.spec}
+                </span>
+                <span
+                  class="tier-bar block rounded-t-lg rounded-b-sm"
+                  style={`height:${18 + i * 10}%; background: linear-gradient(180deg, color-mix(in oklab, #f0a35e ${30 + i * 8}%, #3a2a22), color-mix(in oklab, #e0643c ${10 + i * 6}%, #1c1612));`}
+                />
+                <span class="mt-3 text-center text-[0.62rem] leading-tight text-soft sm:text-[0.72rem]">{tier.name}</span>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </article>
+
+    <article data-reveal data-spotlight class="surface p-7 md:p-9 lg:col-span-5">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex size-10 items-center justify-center rounded-xl bg-white/[0.05] text-amber ring-1 ring-white/[0.08]">
+          <Icon name="folder-open" size={20} />
+        </span>
+        <h3 class="text-xl font-semibold">{l.local.title}</h3>
+      </div>
+      <p class="mt-4 text-sm leading-relaxed text-soft">{l.local.desc}</p>
+      <div class="mt-6 flex flex-wrap gap-2">
+        {audioFormats.map((f) => <span class="chip font-mono !text-[0.72rem]">.{f}</span>)}
+      </div>
+    </article>
+
+    <article data-reveal data-spotlight class="surface p-7 md:p-9 lg:col-span-5">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex size-10 items-center justify-center rounded-xl bg-white/[0.05] text-amber ring-1 ring-white/[0.08]">
+          <Icon name="cloud-arrow-down" size={20} />
+        </span>
+        <h3 class="text-xl font-semibold">{l.download.title}</h3>
+      </div>
+      <p class="mt-4 text-sm leading-relaxed text-soft">{l.download.desc}</p>
+      <div class="mt-6 space-y-3" aria-hidden="true">
+        {
+          [
+            { name: 'Leaves in Motion', p: 72, speed: '4.2 MB/s' },
+            { name: 'Blue Hour', p: 38, speed: '3.6 MB/s' },
+          ].map((d) => (
+            <div class="rounded-xl bg-white/[0.03] px-4 py-3 ring-1 ring-white/[0.06]">
+              <div class="flex items-center justify-between text-xs">
+                <span>{d.name}</span>
+                <span class="font-mono text-faint">{d.speed}</span>
+              </div>
+              <div class="mt-2 h-1 overflow-hidden rounded-full bg-white/10">
+                <div class="dl-bar h-full rounded-full bg-[linear-gradient(90deg,#f5cf8a,#f0a35e)]" style={`--w:${d.p}%`} />
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </article>
+
+    <article data-reveal data-spotlight class="surface flex flex-col gap-6 p-7 md:flex-row md:items-center md:p-9 lg:col-span-12">
+      <div class="md:w-[38%]">
+        <div class="flex items-center gap-3">
+          <span class="inline-flex size-10 items-center justify-center rounded-xl bg-white/[0.05] text-amber ring-1 ring-white/[0.08]">
+            <Icon name="music-notes" size={20} />
+          </span>
+          <h3 class="text-xl font-semibold">{l.formats.title}</h3>
+        </div>
+        <p class="mt-4 text-sm leading-relaxed text-soft">{l.formats.desc}</p>
+      </div>
+      <div class="flex flex-1 flex-wrap gap-2 md:justify-end">
+        {lyricFormats.map((f) => <span class="format">{f}</span>)}
+      </div>
+    </article>
+  </div>
+</section>
+
+<style>
+  .tier-bar {
+    transform-origin: bottom;
+    transition:
+      transform 0.5s var(--ease-out-expo),
+      filter 0.4s ease;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18);
+  }
+  .tier:hover .tier-bar {
+    transform: scaleY(1.04);
+    filter: brightness(1.2);
+  }
+  .tier:last-child .tier-bar {
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.3),
+      0 0 30px -4px rgb(240 163 94 / 0.55);
+  }
+
+  .dl-bar {
+    width: var(--w);
+    animation: dl 6s var(--ease-out-quint) infinite;
+  }
+  @keyframes dl {
+    0% {
+      width: calc(var(--w) - 25%);
+    }
+    100% {
+      width: calc(var(--w) + 20%);
+    }
+  }
+
+  .format {
+    display: inline-flex;
+    align-items: center;
+    height: 2.5rem;
+    padding-inline: 1rem;
+    border-radius: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-paper);
+    background: linear-gradient(180deg, rgb(255 244 232 / 0.06), rgb(255 244 232 / 0.02));
+    box-shadow: inset 0 0 0 1px rgb(255 240 225 / 0.09);
+    transition:
+      transform 0.4s var(--ease-out-expo),
+      box-shadow 0.4s ease;
+  }
+  .format:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 0 0 1px rgb(240 163 94 / 0.5),
+      0 10px 24px -12px rgb(240 163 94 / 0.6);
+  }
+</style>

@@ -1,0 +1,137 @@
+---
+import { GITHUB_URL, SITE } from '~/config/site';
+import { getDict, type Locale } from '~/i18n';
+import Icon from './Icon.astro';
+import Phrases from './Phrases.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = getDict(locale);
+const s = t.source;
+
+const stack = [
+  { name: 'iced', href: 'https://github.com/iced-rs/iced' },
+  { name: 'wgpu', href: 'https://github.com/gfx-rs/wgpu' },
+  { name: 'cosmic-text', href: 'https://github.com/pop-os/cosmic-text' },
+  { name: 'rodio', href: 'https://github.com/RustAudio/rodio' },
+  { name: 'Symphonia', href: 'https://github.com/pdeljanov/Symphonia' },
+  { name: 'cpal', href: 'https://github.com/RustAudio/cpal' },
+  { name: 'SQLx', href: 'https://github.com/launchbadge/sqlx' },
+  { name: 'Tokio', href: 'https://github.com/tokio-rs/tokio' },
+];
+const thanksLinks: Record<string, string> = {
+  AMLL: 'https://github.com/Steve-xmh/applemusic-like-lyrics',
+  'ncm-api-rs': 'https://github.com/SPlayer-Dev/ncm-api-rs',
+};
+
+const buildLines = [`git clone https://github.com/${SITE.repo}`, 'cd Rustle', 'cargo run --release'];
+---
+
+<section id="source" class="container-x py-24 md:py-32">
+  <div class="grid gap-14 lg:grid-cols-2 lg:gap-20">
+    <div class="min-w-0">
+      <p data-reveal class="kicker">{s.kicker}</p>
+      <h2 data-reveal class="section-title mt-6"><Phrases text={s.title} /></h2>
+      <p data-reveal class="mt-7 max-w-xl text-lg leading-relaxed text-soft">{s.body}</p>
+      <div data-reveal class="mt-9 flex flex-wrap gap-3">
+        <a href={GITHUB_URL} target="_blank" rel="noopener" class="btn btn-primary">
+          <Icon name="star" size={17} />
+          {s.star}
+        </a>
+        <a href={`${GITHUB_URL}#-从源码构建`} target="_blank" rel="noopener" class="btn btn-ghost">
+          <Icon name="book-open-text" size={17} />
+          {s.build}
+        </a>
+      </div>
+
+      <div data-reveal class="mt-10 overflow-hidden rounded-2xl bg-black/35 ring-1 ring-white/[0.07]">
+        <div class="flex items-center justify-between border-b hairline px-5 py-3">
+          <span class="flex gap-1.5" aria-hidden="true">
+            <span class="size-2.5 rounded-full bg-white/15"></span>
+            <span class="size-2.5 rounded-full bg-white/15"></span>
+            <span class="size-2.5 rounded-full bg-white/15"></span>
+          </span>
+          <span class="font-mono text-[0.68rem] text-faint">Rust 1.98+</span>
+          <button
+            type="button"
+            data-copy={buildLines.join('\n')}
+            data-label-copy={t.download.copy}
+            data-label-copied={t.download.copied}
+            aria-label={t.download.copy}
+            class="copy inline-flex size-7 items-center justify-center rounded-lg text-soft transition hover:bg-white/[0.06] hover:text-paper"
+          >
+            <Icon name="copy" size={14} class="i-copy" />
+            <Icon name="check" size={14} class="i-check text-[#7ee2a8]" />
+          </button>
+        </div>
+        <pre class="overflow-x-auto px-5 py-5 font-mono text-[0.8rem] leading-7"><code>{buildLines.map((l) => <span class="block"><span class="text-amber select-none">$ </span>{l}</span>)}</code></pre>
+      </div>
+
+      <div data-reveal class="mt-10">
+        <p class="font-mono text-[0.7rem] tracking-[0.16em] text-faint uppercase">{s.stack}</p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          {
+            stack.map((x) => (
+              <a href={x.href} target="_blank" rel="noopener" class="chip transition hover:bg-white/[0.08] hover:text-paper">
+                {x.name}
+              </a>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="flex min-w-0 flex-col gap-5">
+      <div data-reveal class="surface p-6 md:p-8">
+        <p class="font-mono text-[0.78rem] text-soft">
+          <Icon name="folder-open" size={15} class="mr-1.5 inline-block -translate-y-px text-amber" />Rustle/
+        </p>
+        <ul class="tree mt-3 font-mono text-[0.78rem]">
+          {
+            s.crates.map((c, i) => (
+              <li class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-0.5 py-2.5 sm:grid-cols-[13.5rem_minmax(0,1fr)]">
+                <span class="whitespace-nowrap text-paper">
+                  <span class="text-faint select-none">{i === s.crates.length - 1 ? '└─ ' : '├─ '}</span>
+                  {c.name}
+                </span>
+                <span class="col-span-2 pl-[2.1rem] font-sans text-[0.8rem] text-faint sm:col-span-1 sm:pl-0">{c.desc}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <div data-reveal class="surface p-6 md:p-8">
+        <p class="font-mono text-[0.7rem] tracking-[0.16em] text-faint uppercase">{s.thanks}</p>
+        <ul class="mt-4 space-y-3">
+          {
+            s.thanksList.map((x) => (
+              <li>
+                <a href={thanksLinks[x.name]} target="_blank" rel="noopener" class="group flex items-start gap-3">
+                  <Icon name="heart" size={16} class="mt-1 shrink-0 text-rose" />
+                  <span>
+                    <span class="font-medium group-hover:underline group-hover:decoration-amber group-hover:underline-offset-4">{x.name}</span>
+                    <span class="block text-sm text-faint">{x.desc}</span>
+                  </span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .copy .i-check,
+  .copy[data-copied] .i-copy {
+    display: none;
+  }
+  .copy[data-copied] .i-check {
+    display: block;
+  }
+</style>

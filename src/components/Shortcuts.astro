@@ -1,0 +1,50 @@
+---
+import { getDict, type Locale } from '~/i18n';
+import Icon from './Icon.astro';
+import Phrases from './Phrases.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const s = getDict(Astro.props.locale).shortcuts;
+---
+
+<section data-shortcuts class="container-x py-24 md:py-32">
+  <div class="grid gap-14 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+    <div class="lg:sticky lg:top-28 lg:self-start">
+      <p data-reveal class="kicker">{s.kicker}</p>
+      <h2 data-reveal class="section-title mt-6"><Phrases text={s.title} /></h2>
+      <p data-reveal class="mt-7 max-w-md text-sm leading-relaxed text-soft">{s.note}</p>
+      <p data-reveal class="mt-8 hidden items-center gap-2 text-xs text-faint lg:flex">
+        <Icon name="keyboard" size={16} />
+        {s.tryIt}
+      </p>
+    </div>
+
+    <ul class="grid gap-x-10 sm:grid-cols-2 lg:grid-cols-1">
+      {
+        s.list.map((item) => (
+          <li data-reveal class="flex min-h-16 items-center justify-between gap-4 border-b hairline py-4">
+            <span class="text-[0.95rem]">{item.action}</span>
+            <span class="flex shrink-0 items-center gap-1.5">
+              {item.keys.map((combo, ci) => (
+                <>
+                  {ci > 0 && <span class="px-0.5 text-faint">/</span>}
+                  {combo.map((k, ki) => (
+                    <>
+                      {ki > 0 && <span class="sr-only">+</span>}
+                      <kbd class="keycap" data-key={k}>
+                        {k}
+                      </kbd>
+                    </>
+                  ))}
+                </>
+              ))}
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
