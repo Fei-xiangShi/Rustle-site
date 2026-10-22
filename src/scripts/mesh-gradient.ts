@@ -176,8 +176,8 @@ export class MeshGradient {
       canvas.style.opacity = '0';
     });
 
-    this.resize();
-    canvas.dataset.ready = '';
+    // The ResizeObserver's initial callback sizes and paints the first frame,
+    // so construction never forces a synchronous layout.
   }
 
   /** Glide to a new palette (any number of hex colours, cycled to five stops). */
@@ -209,6 +209,7 @@ export class MeshGradient {
       this.gl.viewport(0, 0, w, h);
     }
     this.draw();
+    this.canvas.dataset.ready = '';
   }
 
   private schedule(force = false): void {

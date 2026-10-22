@@ -1,6 +1,6 @@
 ---
 import { Picture } from 'astro:assets';
-import lyricsShot from '~/assets/screenshots/lyrics_page.png';
+import lyricsShot from '~/assets/screenshots/lyrics.png';
 import { GITHUB_URL } from '~/config/site';
 import { format, getDict, type Locale } from '~/i18n';
 import type { ReleaseInfo } from '~/lib/release';
@@ -22,6 +22,10 @@ const lines = t.hero.titleLines.map((line) =>
   locale === 'zh' ? [[...line]] : line.split(' ').map((word) => [...word]),
 );
 const count = (words: string[][]) => words.reduce((n, w) => n + w.length, 0);
+// Global character index across both lines drives the staggered intro.
+const lineStart = lines.map((_, li) => lines.slice(0, li).reduce((n, words) => n + count(words), 0));
+const charIndex = (li: number, wi: number, ci: number) =>
+  lineStart[li] + lines[li].slice(0, wi).reduce((n, w) => n + w.length, 0) + ci;
 // Running character index per word of the gradient line.
 let running = 0;
 const offsets = lines[1].map((word) => {
@@ -52,36 +56,40 @@ const offsets = lines[1].map((word) => {
       <Icon name="arrow-right" size={13} class="transition-transform duration-500 group-hover:translate-x-0.5" />
     </a>
 
-    <h1 class="font-display mt-9 text-[clamp(2.7rem,8.6vw,7.4rem)] leading-[1.02]" aria-label={t.hero.titleLines.join('')}>
+    <h1 class="font-display mt-9 text-[clamp(2.7rem,8.6vw,7.4rem)] leading-[1.02]">
+      <span class="sr-only">Rustle — </span>
       {
         lines.map((words, li) => (
-          <span class:list={['block', li === 1 && 'italic']} aria-hidden="true">
-            {words.map((chars, wi) => (
-              <>
-                {wi > 0 && ' '}
-                <span class="inline-block whitespace-nowrap">
-                  {chars.map((ch, ci) => (
-                    <span
-                      data-hero-char
-                      class:list={['inline-block', li === 1 && 'warm-char']}
-                      style={li === 1 ? `--i:${offsets[wi] + ci};--n:${count(words)}` : undefined}
-                    >
-                      {ch}
-                    </span>
-                  ))}
-                </span>
-              </>
-            ))}
-          </span>
+          <>
+            {li > 0 && locale === 'en' && ' '}
+            <span class:list={['block', li === 1 && 'italic']}>
+              {words.map((chars, wi) => (
+                <>
+                  {wi > 0 && ' '}
+                  <span class="inline-block whitespace-nowrap">
+                    {chars.map((ch, ci) => (
+                      <span
+                        data-hero-char
+                        class:list={['inline-block', li === 1 && 'warm-char']}
+                        style={`--c:${charIndex(li, wi, ci)};${li === 1 ? `--i:${offsets[wi] + ci};--n:${count(words)}` : ''}`}
+                      >
+                        {ch}
+                      </span>
+                    ))}
+                  </span>
+                </>
+              ))}
+            </span>
+          </>
         ))
       }
     </h1>
 
-    <p data-hero-after class="mt-8 max-w-[38rem] text-[1.05rem] leading-relaxed text-soft md:text-lg">
+    <p data-hero-after style="--d:0.5s" class="mt-8 max-w-[38rem] text-[1.05rem] leading-relaxed text-soft md:text-lg">
       {t.hero.subtitle}
     </p>
 
-    <div data-hero-after class="mt-10 flex flex-wrap items-center justify-center gap-3">
+    <div data-hero-after style="--d:0.6s" class="mt-10 flex flex-wrap items-center justify-center gap-3">
       <a
         href="#download"
         class="btn btn-primary !h-[3.25rem] !px-7"
@@ -105,7 +113,7 @@ const offsets = lines[1].map((word) => {
       </a>
     </div>
 
-    <p data-hero-after class="mt-6 flex items-center gap-3 text-[0.8rem] text-faint">
+    <p data-hero-after style="--d:0.7s" class="mt-6 flex items-center gap-3 text-[0.8rem] text-faint">
       <span>{t.hero.meta[0]}</span>
       <span class="size-1 rounded-full bg-white/25"></span>
       <span>{t.hero.meta[1]}</span>
@@ -119,7 +127,7 @@ const offsets = lines[1].map((word) => {
         <Picture
           src={lyricsShot}
           formats={['avif', 'webp']}
-          widths={[640, 960, 1280, 1600, 1908]}
+          widths={[640, 960, 1280, 1600, 2000, 2400]}
           sizes="(min-width: 1280px) 1216px, 92vw"
           alt={t.hero.screenshotAlt}
           loading="eager"
@@ -134,8 +142,11 @@ const offsets = lines[1].map((word) => {
 <script>
   import { MeshGradient } from '~/scripts/mesh-gradient';
 
+  // The CSS fallback gradient covers first paint; compile the shader once the page is idle.
   const canvas = document.querySelector<HTMLCanvasElement>('[data-hero-canvas]');
-  if (canvas) MeshGradient.create(canvas, JSON.parse(canvas.dataset.palette!), { speed: 0.55, resolution: 0.35 });
+  const start = () => canvas && MeshGradient.create(canvas, JSON.parse(canvas.dataset.palette!), { speed: 0.55, resolution: 0.35 });
+  if ('requestIdleCallback' in window) requestIdleCallback(start, { timeout: 2000 });
+  else setTimeout(start, 600);
 </script>
 
 <style>

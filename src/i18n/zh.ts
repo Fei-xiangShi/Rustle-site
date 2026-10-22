@@ -2,9 +2,13 @@ const zh = {
   lang: 'zh-CN',
   locale: 'zh',
   meta: {
-    title: 'Rustle — 会呼吸的歌词，原生的速度',
+    title: 'Rustle — 开源免费的网易云音乐第三方桌面播放器 · 逐字歌词',
     description:
-      'Rustle 是一款纯 Rust 打造、GPU 渲染的桌面音乐播放器：电影级逐字歌词、随封面流动的背景、专业音频引擎，网易云音乐与本地曲库一处聆听。支持 Windows、macOS 与 Linux。',
+      'Rustle 是纯 Rust 打造、GPU 渲染的开源桌面音乐播放器：逐字歌词、随封面流动的背景、10 段均衡器与 Automix，网易云音乐与本地曲库一处聆听，支持 Windows、macOS 与 Linux。',
+    keywords:
+      'Rustle,网易云音乐第三方客户端,网易云音乐桌面版,开源音乐播放器,桌面音乐播放器,逐字歌词,动态歌词,AMLL,Apple Music 风格歌词,本地音乐播放器,无损音乐播放器,均衡器,Windows 音乐播放器,macOS 音乐播放器,Linux 音乐播放器,Rust',
+    ogImageAlt: 'Rustle 歌词页：随封面取色流动的背景与逐字高亮的歌词',
+    siteName: 'Rustle 音乐播放器',
   },
   nav: {
     lyrics: '歌词',
@@ -21,12 +25,12 @@ const zh = {
   hero: {
     eyebrow: '新版本',
     titleLines: ['会呼吸的歌词，', '原生的速度。'],
-    subtitle: '纯 Rust 打造、GPU 渲染的桌面音乐播放器。网易云音乐与本地曲库，一处聆听。',
+    subtitle: 'Rustle 是一款纯 Rust 打造、GPU 渲染的开源桌面音乐播放器。网易云音乐与本地曲库，一处聆听。',
     ctaDownload: '免费下载',
     ctaFor: '下载 {os} 版',
     ctaGithub: '查看源码',
     meta: ['免费开源', 'Windows · macOS · Linux'],
-    screenshotAlt: 'Rustle 歌词页：左侧专辑封面与播放控制，右侧逐字高亮的歌词',
+    screenshotAlt: 'Rustle 歌词页：左侧为 Autumn Night 的专辑封面与播放控制，右侧为逐字高亮的英文歌词与中文翻译，背景随封面取色流动',
   },
   stats: [
     { value: '11', label: '种歌词格式' },
@@ -162,9 +166,18 @@ const zh = {
     kicker: '界面一览',
     title: '安静，而有分寸。',
     tabs: [
-      { key: 'lyrics', label: '歌词', caption: '封面取色的流动背景，与逐字点亮的歌词。' },
-      { key: 'playlist', label: '歌单', caption: '虚拟列表渲染，千首歌曲依旧顺滑。' },
-      { key: 'settings', label: '设置', caption: '音质、网络、存储与快捷键，一应俱全。' },
+      {
+        key: 'home',
+        label: '发现',
+        caption: '每日推荐、私人雷达与私人 FM，一打开就有想听的。',
+        alt: 'Rustle 首页：每日推荐、私人雷达、私人 FM 与推荐歌单',
+      },
+      {
+        key: 'audio',
+        label: '音频引擎',
+        caption: '10 段均衡器、前级增益与实时频谱，所见即所听。',
+        alt: 'Rustle 音频引擎：10 段均衡器曲线、前级增益与实时频谱分析',
+      },
     ],
   },
   shortcuts: {
@@ -233,15 +246,48 @@ const zh = {
       { name: 'rustle-domain', desc: '领域模型' },
     ],
   },
+  faq: {
+    kicker: '常见问题',
+    title: '你可能想知道。',
+    items: [
+      {
+        q: 'Rustle 是免费的吗？',
+        a: '是的。Rustle 完全免费，以 AGPL-3.0 协议开源，没有广告与内购。播放网易云音乐的会员内容仍需要对应账号的会员权益。',
+      },
+      {
+        q: 'Rustle 支持哪些系统？',
+        a: '支持 Windows（x86_64，提供 MSI 安装包与便携版 EXE）、macOS 10.13 及以上（Apple Silicon 与 Intel），以及 Linux（AppImage；Arch Linux 可通过 AUR 安装）。',
+      },
+      {
+        q: '如何登录网易云音乐账号？',
+        a: '在 Rustle 中用网易云音乐手机 App 扫码登录，即可使用每日推荐、私人雷达、私人 FM、播客电台，并同步你的歌单与红心。',
+      },
+      {
+        q: 'Rustle 和网易云音乐官方客户端是什么关系？',
+        a: 'Rustle 是独立开发的第三方客户端，与网易云音乐及其关联公司没有任何关联。音乐内容版权归各自权利人所有。',
+      },
+      {
+        q: '支持哪些歌词格式？有逐字歌词吗？',
+        a: '支持 LRC、LQE、YRC、QRC、KRC、ESLrc、LYS、TTML、ASS、SSA、SRT 共 11 种格式，并会从 AMLL TTML 歌词数据库、QQ 音乐与网易云自动择优获取逐字歌词、翻译与罗马音。',
+      },
+      {
+        q: '可以播放本地音乐吗？',
+        a: '可以。支持 mp3、flac、m4a、aac、ogg、opus、wav、wma、aiff，导入文件夹即成歌单，还能监听目录自动同步，并自动识别 GBK、Big5、Shift-JIS 等老旧标签编码。',
+      },
+      {
+        q: '对电脑配置有什么要求？',
+        a: '歌词引擎与动态背景依赖 GPU（Vulkan / Metal / DirectX 12）。在老旧显卡或虚拟机上，可在「设置 → 界面」中开启省电模式，改为纯文本歌词渲染。',
+      },
+    ],
+  },
   footer: {
+    faq: '常见问题',
     tagline: '会呼吸的歌词，原生的速度。',
     product: '产品',
     resources: '资源',
     releases: '版本发布',
     issues: '问题反馈',
     license: '许可协议',
-    disclaimer:
-      'Rustle 是第三方客户端，与网易云音乐及其关联公司无任何关联。音乐内容版权归其各自权利人所有，请支持正版。页面中的演示歌词为原创示例。',
     madeWith: 'Made with 🦀 and ♪',
   },
   notFound: {

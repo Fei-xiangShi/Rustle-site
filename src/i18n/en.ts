@@ -4,9 +4,13 @@ const en: Dict = {
   lang: 'en',
   locale: 'en',
   meta: {
-    title: 'Rustle — Lyrics that breathe, at native speed',
+    title: 'Rustle — Open-Source Music Player with Word-by-Word Lyrics',
     description:
-      'Rustle is a desktop music player written in pure Rust and rendered on the GPU: cinematic word-by-word lyrics, backgrounds that flow with the album art, and a pro-grade audio engine for NetEase Cloud Music and your local library. Windows, macOS and Linux.',
+      'Free, open-source desktop music player in pure Rust: GPU-rendered word-by-word lyrics, a 10-band EQ and Automix for NetEase Cloud Music and local files.',
+    keywords:
+      'Rustle,NetEase Cloud Music client,NetEase Cloud Music desktop,desktop music player,open source music player,word-by-word lyrics,synced lyrics,Apple Music-like lyrics,AMLL,lossless music player,equalizer,Rust,Windows,macOS,Linux',
+    ogImageAlt: 'Rustle lyrics view: a background tinted by the album art and word-by-word lyrics',
+    siteName: 'Rustle Music Player',
   },
   nav: {
     lyrics: 'Lyrics',
@@ -24,12 +28,12 @@ const en: Dict = {
     eyebrow: 'New release',
     titleLines: ['Lyrics that breathe.', 'Native speed.'],
     subtitle:
-      'A desktop music player written in pure Rust and rendered on the GPU. NetEase Cloud Music and your local library, in one place.',
+      'Rustle is an open-source desktop music player written in pure Rust and rendered on the GPU. NetEase Cloud Music and your local library, in one place.',
     ctaDownload: 'Download for free',
     ctaFor: 'Download for {os}',
     ctaGithub: 'View source',
     meta: ['Free & open source', 'Windows · macOS · Linux'],
-    screenshotAlt: 'Rustle lyrics view: album art and playback controls on the left, word-by-word lyrics on the right',
+    screenshotAlt: 'Rustle lyrics view: album art and playback controls for Autumn Night on the left, word-by-word lyrics with a Chinese translation on the right, over a background tinted by the cover',
   },
   stats: [
     { value: '11', label: 'lyric formats' },
@@ -165,9 +169,18 @@ const en: Dict = {
     kicker: 'A closer look',
     title: 'Quiet, and precise.',
     tabs: [
-      { key: 'lyrics', label: 'Lyrics', caption: 'A background tinted by the cover, with lyrics that light up word by word.' },
-      { key: 'playlist', label: 'Playlist', caption: 'Virtualized lists keep thousands of tracks perfectly smooth.' },
-      { key: 'settings', label: 'Settings', caption: 'Quality, network, storage and shortcuts, all in one place.' },
+      {
+        key: 'home',
+        label: 'Discover',
+        caption: 'Daily picks, Private Radar and Personal FM — something to play the moment it opens.',
+        alt: 'Rustle home: daily picks, Private Radar, Personal FM and recommended playlists',
+      },
+      {
+        key: 'audio',
+        label: 'Audio engine',
+        caption: 'A 10-band equalizer, preamp and live spectrum — what you see is what you hear.',
+        alt: 'Rustle audio engine: 10-band equalizer curve, preamp and real-time spectrum analyzer',
+      },
     ],
   },
   shortcuts: {
@@ -236,15 +249,48 @@ const en: Dict = {
       { name: 'rustle-domain', desc: 'Domain model' },
     ],
   },
+  faq: {
+    kicker: 'FAQ',
+    title: 'Good to know.',
+    items: [
+      {
+        q: 'Is Rustle free?',
+        a: 'Yes. Rustle is completely free and open source under AGPL-3.0, with no ads or in-app purchases. Members-only NetEase Cloud Music content still requires a matching membership on your account.',
+      },
+      {
+        q: 'Which platforms does Rustle support?',
+        a: 'Windows (x86_64, as an MSI installer or portable EXE), macOS 10.13 or later (Apple Silicon and Intel), and Linux (AppImage; Arch Linux users can install from the AUR).',
+      },
+      {
+        q: 'How do I sign in to NetEase Cloud Music?',
+        a: 'Scan the QR code in Rustle with the NetEase Cloud Music mobile app. Daily picks, Private Radar, Personal FM and podcasts become available, and your playlists and likes stay in sync.',
+      },
+      {
+        q: 'Is Rustle affiliated with NetEase Cloud Music?',
+        a: 'No. Rustle is an independent third-party client and is not affiliated with NetEase Cloud Music or its affiliates. All music content belongs to its respective rights holders.',
+      },
+      {
+        q: 'Which lyric formats are supported? Are word-by-word lyrics available?',
+        a: 'Eleven formats: LRC, LQE, YRC, QRC, KRC, ESLrc, LYS, TTML, ASS, SSA and SRT. Rustle automatically picks the best word-by-word lyrics, translations and romanization from the AMLL TTML database, QQ Music and NetEase Cloud Music.',
+      },
+      {
+        q: 'Can it play my local music?',
+        a: 'Yes — mp3, flac, m4a, aac, ogg, opus, wav, wma and aiff. Import a folder to turn it into a playlist, keep it synced with a folder watcher, and legacy GBK, Big5 or Shift-JIS tags are decoded correctly.',
+      },
+      {
+        q: 'What hardware do I need?',
+        a: 'The lyrics engine and animated backgrounds use the GPU (Vulkan / Metal / DirectX 12). On older graphics or virtual machines, enable Power Saver in Settings → Interface for plain-text lyrics.',
+      },
+    ],
+  },
   footer: {
+    faq: 'FAQ',
     tagline: 'Lyrics that breathe, at native speed.',
     product: 'Product',
     resources: 'Resources',
     releases: 'Releases',
     issues: 'Issues',
     license: 'License',
-    disclaimer:
-      'Rustle is a third-party client and is not affiliated with NetEase Cloud Music or its affiliates. All music content belongs to its respective rights holders — please support the artists. Demo lyrics on this page are original examples.',
     madeWith: 'Made with 🦀 and ♪',
   },
   notFound: {

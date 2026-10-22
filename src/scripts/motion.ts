@@ -1,9 +1,5 @@
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 import { prefersReducedMotion } from './color';
-
-gsap.registerPlugin(ScrollTrigger);
 
 let lenis: Lenis | null = null;
 
@@ -35,139 +31,124 @@ function setupNav(): void {
   });
 }
 
-function setupSmoothScroll(): void {
-  lenis = new Lenis({ lerp: 0.1, wheelMultiplier: 1, smoothWheel: true });
-  lenis.on('scroll', ScrollTrigger.update);
-  gsap.ticker.add((time) => lenis?.raf(time * 1000));
-  gsap.ticker.lagSmoothing(0);
-}
-
-function heroIntro(): void {
-  const chars = gsap.utils.toArray<HTMLElement>('[data-hero-char]');
-  const tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
-  tl.fromTo(
-    '[data-hero-fade]',
-    { opacity: 0, y: 16, filter: 'blur(6px)' },
-    { opacity: 1, y: 0, filter: 'blur(0px)', duration: 1.2, stagger: 0.08 },
-    0.1,
-  );
-  // Lyric-style light-up: each character brightens and settles in sequence.
-  tl.fromTo(
-    chars,
-    { opacity: 0.12, y: '0.12em', filter: 'blur(10px)' },
-    { opacity: 1, y: 0, filter: 'blur(0px)', duration: 1.4, stagger: 0.045 },
-    0.25,
-  );
-  tl.fromTo(
-    '[data-hero-after]',
-    { opacity: 0, y: 20, filter: 'blur(8px)' },
-    { opacity: 1, y: 0, filter: 'blur(0px)', duration: 1.2, stagger: 0.1, clearProps: 'filter' },
-    0.9,
-  );
-
-  const shot = document.querySelector('[data-hero-shot]');
-  if (shot) {
-    tl.fromTo(shot, { opacity: 0, y: 80 }, { opacity: 1, y: 0, duration: 1.8 }, 0.9);
-    gsap.fromTo(
-      shot,
-      { rotateX: 22, scale: 0.9 },
-      {
-        rotateX: 0,
-        scale: 1,
-        ease: 'none',
-        scrollTrigger: { trigger: shot, start: 'top 95%', end: 'top 25%', scrub: true },
-      },
-    );
-  }
-
-  const glow = document.querySelector('[data-hero-mesh]');
-  if (glow) {
-    gsap.to(glow, {
-      yPercent: 18,
-      opacity: 0.35,
-      ease: 'none',
-      scrollTrigger: { trigger: '[data-hero]', start: 'top top', end: 'bottom top', scrub: true },
-    });
-  }
-}
-
+/**
+ * Scroll reveals run on one IntersectionObserver plus CSS transitions (see
+ * global.css), so startup never measures layout for dozens of triggers.
+ */
 function reveals(): void {
-  ScrollTrigger.batch('[data-reveal]', {
-    start: 'top 88%',
-    once: true,
-    onEnter: (batch) => {
-      // A long jump (anchor link, scrollbar drag) hands over every element it
-      // skipped; only stagger what is actually on screen and show the rest now.
-      const visible = batch.filter((el) => {
-        const r = el.getBoundingClientRect();
-        return r.bottom > 0 && r.top < window.innerHeight;
-      });
-      const skipped = batch.filter((el) => !visible.includes(el));
-      if (skipped.length) gsap.set(skipped, { opacity: 1 });
-      if (!visible.length) return;
-      gsap.fromTo(
-        visible,
-        { opacity: 0, y: 32, filter: 'blur(8px)' },
-        {
-          opacity: 1,
-          y: 0,
-          filter: 'blur(0px)',
-          duration: 1.2,
-          ease: 'expo.out',
-          stagger: Math.min(0.09, 0.7 / Math.max(1, visible.length)),
-          clearProps: 'filter,transform',
-        },
-      );
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries
+        .filter((e) => e.isIntersecting)
+        .forEach((e, i) => {
+          const el = e.target as HTMLElement;
+          el.style.setProperty('--rd', `${Math.min(i * 0.08, 0.6)}s`);
+          el.dataset.revealed = '';
+          io.unobserve(el);
+        });
     },
-  });
+    { rootMargin: '0px 0px -12% 0px' },
+  );
+  document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));
 }
 
-function manifesto(): void {
-  const el = document.querySelector<HTMLElement>('[data-manifesto]');
-  if (!el) return;
-  const parts = el.querySelectorAll('[data-m]');
-  gsap.fromTo(
-    parts,
-    { opacity: 0.14 },
-    {
-      opacity: 1,
-      ease: 'none',
-      stagger: 0.12,
-      scrollTrigger: { trigger: el, start: 'top 78%', end: 'bottom 45%', scrub: 0.6 },
+interface Scrub {
+  /** Element whose document position defines the range (never transformed by the scrub). */
+  anchor: Element;
+  /** Scroll range from the anchor's document top/bottom and the viewport height. */
+  range: (top: number, bottom: number, vh: number) => [number, number];
+  apply: (progress: number) => void;
+  start: number;
+  end: number;
+  last: number;
+}
+
+const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
+
+/** Scroll-linked effects: a few elements, measured on resize, applied per frame. */
+function scrubs(): void {
+  const list: Scrub[] = [];
+  const add = (anchor: Element | null | undefined, range: Scrub['range'], apply: Scrub['apply']) => {
+    if (anchor) list.push({ anchor, range, apply, start: 0, end: 1, last: -1 });
+  };
+
+  // Hero screenshot flattens from a tilt as it rises into view.
+  const shot = document.querySelector<HTMLElement>('[data-hero-shot]');
+  add(
+    shot?.parentElement,
+    (top, _bottom, vh) => [top - vh * 0.95, top - vh * 0.25],
+    (p) => {
+      shot!.style.transform = `rotateX(${(22 * (1 - p)).toFixed(2)}deg) scale(${(0.9 + 0.1 * p).toFixed(4)})`;
     },
   );
-}
 
-function counters(): void {
-  document.querySelectorAll<HTMLElement>('[data-count]').forEach((el) => {
-    const target = Number(el.dataset.count);
-    if (!Number.isFinite(target) || target === 0) return;
-    const state = { v: 0 };
-    el.textContent = '0';
-    ScrollTrigger.create({
-      trigger: el,
-      start: 'top 92%',
-      once: true,
-      onEnter: () =>
-        gsap.to(state, {
-          v: target,
-          duration: target > 100 ? 1.8 : 1.2,
-          ease: 'expo.out',
-          onUpdate: () => (el.textContent = String(Math.round(state.v))),
-        }),
-    });
-  });
+  // Hero glow drifts down and fades while the hero scrolls away.
+  const glow = document.querySelector<HTMLElement>('[data-hero-mesh]');
+  add(
+    glow && document.querySelector('[data-hero]'),
+    (top, bottom) => [top, bottom],
+    (p) => {
+      glow!.style.transform = `translateY(${(18 * p).toFixed(2)}%)`;
+      glow!.style.opacity = (1 - 0.65 * p).toFixed(3);
+    },
+  );
+
+  // Manifesto lights up word by word, like a lyric line being sung.
+  const manifesto = document.querySelector<HTMLElement>('[data-manifesto]');
+  const parts = manifesto ? [...manifesto.querySelectorAll<HTMLElement>('[data-m]')] : [];
+  const spread = 3;
+  add(
+    manifesto,
+    (top, bottom, vh) => [top - vh * 0.78, bottom - vh * 0.45],
+    (p) =>
+      parts.forEach((el, i) => {
+        el.style.opacity = (0.4 + 0.6 * clamp01((p * (parts.length + spread) - i) / spread)).toFixed(3);
+      }),
+  );
+
+  const update = () => {
+    const y = window.scrollY;
+    for (const s of list) {
+      const p = clamp01((y - s.start) / Math.max(1, s.end - s.start));
+      if (Math.abs(p - s.last) < 0.0005) continue;
+      s.last = p;
+      s.apply(p);
+    }
+  };
+  const measure = () => {
+    const vh = window.innerHeight;
+    for (const s of list) {
+      const r = s.anchor.getBoundingClientRect();
+      [s.start, s.end] = s.range(r.top + window.scrollY, r.bottom + window.scrollY, vh);
+      s.last = -1;
+    }
+    update();
+  };
+
+  let queued = false;
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        update();
+      });
+    },
+    { passive: true },
+  );
+  // Layout settles after fonts and images; the body observer re-measures then.
+  new ResizeObserver(() => requestAnimationFrame(measure)).observe(document.body);
 }
 
 export function initMotion(): void {
   setupNav();
   if (prefersReducedMotion()) return;
-  setupSmoothScroll();
-  heroIntro();
   reveals();
-  manifesto();
-  counters();
-  // Layout settles after fonts and images; keep trigger positions honest.
-  document.fonts?.ready.then(() => ScrollTrigger.refresh());
-  window.addEventListener('load', () => ScrollTrigger.refresh(), { once: true });
+  scrubs();
+  // Lenis measures the document on construction; let first layout finish on its own.
+  const startLenis = () => (lenis = new Lenis({ autoRaf: true, lerp: 0.1, smoothWheel: true }));
+  if ('requestIdleCallback' in window) requestIdleCallback(startLenis, { timeout: 1500 });
+  else setTimeout(startLenis, 300);
 }

@@ -1,7 +1,8 @@
 ---
 import { Image } from 'astro:assets';
-import icon from '~/assets/icon.png';
-import { songs } from '~/data/lyrics';
+import blueHour from '~/assets/covers/blue-hour.jpg';
+import leaves from '~/assets/covers/leaves-in-motion.jpg';
+import { songs, type CoverKey } from '~/data/lyrics';
 import { getDict, type Locale } from '~/i18n';
 import Icon from './Icon.astro';
 import Phrases from './Phrases.astro';
@@ -14,14 +15,17 @@ const t = getDict(Astro.props.locale);
 const demo = t.lyrics.demo;
 const first = songs[0];
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+const coverImages: Record<CoverKey, ImageMetadata> = { leaves, blueHour };
+// AMLL's background samples the cover itself, so it gets the source URLs.
+const coverUrls = Object.fromEntries(Object.entries(coverImages).map(([k, img]) => [k, img.src]));
 ---
 
-<section id="lyrics" class="relative py-24 md:py-36">
+<section id="lyrics" aria-labelledby="lyrics-title" class="relative py-24 md:py-36">
   <div class="container-x">
     <div class="grid gap-12 lg:grid-cols-[1.05fr_1fr] lg:items-end">
       <div>
         <p data-reveal class="kicker">{t.lyrics.kicker}</p>
-        <h2 data-reveal class="section-title mt-6"><Phrases text={t.lyrics.title} /></h2>
+        <h2 id="lyrics-title" data-reveal class="section-title mt-6"><Phrases text={t.lyrics.title} /></h2>
         <p data-reveal class="mt-7 max-w-xl text-lg leading-relaxed text-soft">{t.lyrics.body}</p>
       </div>
       <dl class="grid gap-x-8 gap-y-7 sm:grid-cols-2">
@@ -39,25 +43,23 @@ const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).p
     <div
       data-reveal
       data-lyrics-demo
+      data-covers={JSON.stringify(coverUrls)}
       class="lyrics-demo surface relative mt-16 overflow-hidden !rounded-[clamp(1.25rem,2.4vw,2rem)] md:mt-20"
     >
       <div class="demo-fallback absolute inset-0" aria-hidden="true"></div>
-      <canvas data-mesh class="absolute inset-0 size-full opacity-0 transition-opacity duration-1000 data-[ready]:opacity-100" aria-hidden="true"></canvas>
-      <div class="absolute inset-0 bg-[linear-gradient(90deg,rgb(8_5_4/0.55),rgb(8_5_4/0.38))]" aria-hidden="true"></div>
+      <div data-bg class="absolute inset-0" aria-hidden="true"></div>
+      <div class="absolute inset-0 bg-[linear-gradient(90deg,rgb(8_5_4/0.35),rgb(8_5_4/0.12))]" aria-hidden="true"></div>
 
       <div class="relative grid h-full grid-rows-[auto_minmax(0,1fr)] gap-6 p-5 sm:p-8 md:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] md:grid-rows-1 md:gap-10 md:p-12 lg:p-14">
         <div class="flex flex-row items-center gap-5 md:flex-col md:items-stretch md:justify-center">
           <div class="cover-stack relative aspect-square w-20 shrink-0 overflow-hidden rounded-xl shadow-[0_24px_60px_-20px_rgb(0_0_0/0.8)] ring-1 ring-white/10 sm:w-24 md:w-full md:max-w-[19rem] md:rounded-2xl">
-            <div data-cover data-active class="cover absolute inset-0 bg-[#c96a2c]">
-              <Image src={icon} alt="" width={480} height={480} class="size-full scale-[1.32] object-cover" />
-            </div>
-            <div data-cover class="cover absolute inset-0 overflow-hidden" aria-hidden="true">
-              <div class="absolute inset-0 bg-[linear-gradient(165deg,#081a2b_0%,#14506a_48%,#5fb3c4_100%)]"></div>
-              <div class="absolute top-[18%] left-[56%] size-[26%] rounded-full bg-[#f4ead6] shadow-[0_0_70px_14px_rgb(244_234_214/0.35)]"></div>
-              <div class="absolute inset-x-0 bottom-0 h-[42%] bg-[linear-gradient(180deg,transparent,#06121f)]"></div>
-              <div class="absolute inset-x-[8%] bottom-[16%] h-px bg-white/30"></div>
-              <span class="font-display absolute bottom-[6%] left-[8%] text-[clamp(0.7rem,2.2vw,1.6rem)] italic text-white/90">Blue Hour</span>
-            </div>
+            {
+              songs.map((song, i) => (
+                <div data-cover data-active={i === 0 ? '' : undefined} class="cover absolute inset-0">
+                  <Image src={coverImages[song.cover]} alt="" width={480} height={480} class="size-full object-cover" />
+                </div>
+              ))
+            }
           </div>
 
           <div class="min-w-0 flex-1 md:mt-7 md:max-w-[19rem] md:flex-none">
@@ -117,7 +119,7 @@ const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).p
           </div>
         </div>
 
-        <div data-viewport class="lx-viewport h-full min-h-[22rem]" aria-label={t.lyrics.kicker}></div>
+        <div data-viewport role="group" class="demo-viewport relative h-full min-h-[22rem]" aria-label={t.lyrics.kicker}></div>
       </div>
 
       <div class="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between gap-4 px-5 pb-4 text-[0.7rem] text-white/45 sm:px-8 md:px-12">
@@ -129,14 +131,42 @@ const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).p
 </section>
 
 <script>
-  import { mountLyricsDemo } from '~/scripts/lyrics-player';
-
-  document.querySelectorAll<HTMLElement>('[data-lyrics-demo]').forEach((el) => mountLyricsDemo(el));
+  // AMLL (and pixi) only load once the demo is about to scroll into view.
+  document.querySelectorAll<HTMLElement>('[data-lyrics-demo]').forEach((el) => {
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        io.disconnect();
+        import('~/scripts/lyrics-player').then(({ mountLyricsDemo }) => mountLyricsDemo(el));
+      },
+      { rootMargin: '900px 0px' },
+    );
+    io.observe(el);
+  });
 </script>
 
 <style>
   .lyrics-demo {
     height: clamp(40rem, 82vh, 46rem);
+  }
+  .demo-viewport {
+    mask-image: linear-gradient(180deg, transparent 0%, #000 6%, #000 84%, transparent 100%);
+  }
+  .demo-viewport :global(.demo-lyrics) {
+    --amll-lp-font-size: clamp(1.5rem, 2.7vw, 2.3rem);
+    position: absolute;
+    inset: 0;
+    font-family: var(--font-sans);
+    font-weight: 600;
+  }
+  [data-bg] :global(.demo-bg) {
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 1.2s var(--ease-out-quint);
+  }
+  [data-lyrics-demo][data-ready] [data-bg] :global(.demo-bg) {
+    opacity: 1;
   }
   .demo-fallback {
     background:

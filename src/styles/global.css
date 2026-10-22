@@ -15,7 +15,7 @@
 
   --font-sans:
     var(--font-geist), 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif;
-  --font-display: var(--font-instrument), var(--font-noto-serif-sc);
+  --font-display: var(--font-noto-serif-sc), var(--font-instrument);
   --font-mono: var(--font-geist-mono), ui-monospace, 'Cascadia Code', Consolas, monospace;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -69,10 +69,6 @@
   h2,
   h3 {
     text-wrap: balance;
-  }
-
-  p {
-    text-wrap: pretty;
   }
 }
 
@@ -148,7 +144,7 @@
     color: color-mix(in oklab, var(--color-paper) 64%, transparent);
   }
   .text-faint {
-    color: color-mix(in oklab, var(--color-paper) 42%, transparent);
+    color: color-mix(in oklab, var(--color-paper) 56%, transparent);
   }
 
   .surface {
@@ -271,6 +267,13 @@
   opacity: 1;
 }
 
+/* Below-the-fold sections skip style/layout/paint until they near the viewport. */
+main > section:nth-of-type(n + 3),
+body > footer {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 1000px;
+}
+
 /* Film grain over everything; cheap and static. */
 .grain {
   pointer-events: none;
@@ -284,113 +287,54 @@
 
 /* Scroll reveal: hidden only when JS is running and motion is allowed. */
 @media (prefers-reduced-motion: no-preference) {
-  html.js [data-reveal],
-  html.js [data-hero-fade],
-  html.js [data-hero-after],
-  html.js [data-hero-shot] {
+  html.js [data-reveal] {
     opacity: 0;
+    translate: 0 32px;
+    filter: blur(8px);
   }
-  html.js [data-hero-char] {
-    opacity: 0.12;
+  html.js [data-reveal][data-revealed] {
+    opacity: 1;
+    translate: none;
+    filter: none;
+    transition:
+      opacity 1.2s var(--ease-out-expo),
+      translate 1.2s var(--ease-out-expo),
+      filter 1.2s var(--ease-out-expo);
+    transition-delay: var(--rd, 0s);
+  }
+
+  /* Hero intro runs in CSS so it never waits for JavaScript. */
+  [data-hero-fade],
+  [data-hero-after] {
+    animation: hero-rise 1.2s var(--ease-out-expo) both;
+    animation-delay: var(--d, 0.05s);
+  }
+  [data-hero-char] {
+    animation: hero-char 1.3s var(--ease-out-expo) both;
+    animation-delay: calc(0.12s + var(--c, 0) * 0.04s);
+  }
+  [data-hero-shot] {
+    animation: hero-shot 1.6s var(--ease-out-expo) 0.55s both;
   }
 }
 
-/* ---------- Lyrics demo (elements are created at runtime) ---------- */
-.lx-viewport {
-  position: relative;
-  overflow: hidden;
-  mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 78%, transparent 100%);
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    translate: 0 16px;
+  }
 }
-.lx-line {
-  position: absolute;
-  inset-inline: 0;
-  top: 0;
-  padding: 0.55rem 0.9rem;
-  border-radius: 1rem;
-  transform-origin: left center;
-  cursor: pointer;
-  will-change: transform, filter;
-  transition:
-    filter 0.6s var(--ease-out-quint),
-    opacity 0.6s var(--ease-out-quint),
-    background-color 0.3s ease;
+@keyframes hero-char {
+  from {
+    opacity: 0.12;
+    translate: 0 0.12em;
+  }
 }
-.lx-line:hover {
-  background-color: rgb(255 255 255 / 0.06);
-}
-.lx-line[data-duet] {
-  text-align: right;
-  transform-origin: right center;
-}
-.lx-main {
-  font-size: clamp(1.45rem, 2.6vw, 2.15rem);
-  font-weight: 650;
-  line-height: 1.22;
-  letter-spacing: -0.01em;
-}
-.lx-word {
-  display: inline-block;
-  --p: 0;
-  --g: 0;
-  background-image: linear-gradient(
-    90deg,
-    #fff 0%,
-    #fff calc(var(--p) * 130% - 30%),
-    rgb(255 255 255 / 0.32) calc(var(--p) * 130%),
-    rgb(255 255 255 / 0.32) 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  transform: translateY(calc(var(--p) * -0.05em));
-  filter: drop-shadow(0 0 calc(var(--g) * 14px) rgb(255 255 255 / calc(var(--g) * 0.85)));
-}
-.lx-word[data-glow] {
-  background-image: none;
-  color: inherit;
-  filter: none;
-  transform: none;
-}
-.lx-char {
-  display: inline-block;
-  --p: 0;
-  --g: 0;
-  background-image: linear-gradient(
-    90deg,
-    #fff 0%,
-    #fff calc(var(--p) * 130% - 30%),
-    rgb(255 255 255 / 0.32) calc(var(--p) * 130%),
-    rgb(255 255 255 / 0.32) 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  transform: translateY(calc(var(--g) * -0.08em)) scale(calc(1 + var(--g) * 0.08));
-  filter: drop-shadow(0 0 calc(var(--g) * 18px) rgb(255 236 214 / calc(var(--g) * 0.95)));
-}
-.lx-main.lx-bg {
-  margin-top: 0.15rem;
-  font-size: clamp(0.95rem, 1.65vw, 1.35rem);
-  font-weight: 600;
-  opacity: 0.85;
-}
-.lx-trans {
-  margin-top: 0.35rem;
-  font-size: clamp(0.85rem, 1.2vw, 1rem);
-  font-weight: 500;
-  color: rgb(255 255 255 / 0.5);
-}
-.lx-dots {
-  display: flex;
-  gap: 0.6rem;
-  padding: 1.1rem 0.9rem;
-}
-.lx-dots span {
-  width: 0.65rem;
-  height: 0.65rem;
-  border-radius: 999px;
-  background: rgb(255 255 255 / calc(0.25 + var(--p, 0) * 0.75));
-  transform: scale(calc(0.8 + var(--s, 0) * 0.45));
+@keyframes hero-shot {
+  from {
+    opacity: 0;
+    translate: 0 80px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

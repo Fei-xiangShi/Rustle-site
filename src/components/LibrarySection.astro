@@ -14,10 +14,10 @@ const lyricFormats = ['LRC', 'LQE', 'YRC', 'QRC', 'KRC', 'ESLrc', 'LYS', 'TTML',
 const tiers = l.cloud.tiers;
 ---
 
-<section id="library" class="container-x py-24 md:py-32">
+<section id="library" aria-labelledby="library-title" class="container-x py-24 md:py-32">
   <div class="max-w-3xl">
     <p data-reveal class="kicker">{l.kicker}</p>
-    <h2 data-reveal class="section-title mt-6"><Phrases text={l.title} /></h2>
+    <h2 id="library-title" data-reveal class="section-title mt-6"><Phrases text={l.title} /></h2>
   </div>
 
   <div class="mt-14 grid gap-4 lg:grid-cols-12 lg:gap-5">

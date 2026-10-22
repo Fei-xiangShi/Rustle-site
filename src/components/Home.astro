@@ -1,10 +1,15 @@
 ---
-import Base from '~/layouts/Base.astro';
-import type { Locale } from '~/i18n';
+import { getImage } from 'astro:assets';
+import audioShot from '~/assets/screenshots/audio-engine.png';
+import homeShot from '~/assets/screenshots/home.png';
+import lyricsShot from '~/assets/screenshots/lyrics.png';
+import { getDict, type Locale } from '~/i18n';
+import Base, { type Screenshot } from '~/layouts/Base.astro';
 import { getRelease } from '~/lib/release';
 import AudioSection from './AudioSection.astro';
 import Bento from './Bento.astro';
 import Download from './Download.astro';
+import Faq from './Faq.astro';
 import Footer from './Footer.astro';
 import Gallery from './Gallery.astro';
 import Hero from './Hero.astro';
@@ -21,10 +26,27 @@ interface Props {
 }
 
 const { locale } = Astro.props;
+const t = getDict(locale);
 const release = await getRelease();
+const site = Astro.site ?? new URL('https://rustle.fxs.life');
+const screenshots: Screenshot[] = await Promise.all(
+  [
+    { src: lyricsShot, caption: t.hero.screenshotAlt },
+    { src: homeShot, caption: t.gallery.tabs[0].alt },
+    { src: audioShot, caption: t.gallery.tabs[1].alt },
+  ].map(async ({ src, caption }) => {
+    const img = await getImage({ src, format: 'webp', width: 1600 });
+    return {
+      url: new URL(img.src, site).href,
+      caption,
+      width: Number(img.attributes.width),
+      height: Number(img.attributes.height),
+    };
+  }),
+);
 ---
 
-<Base locale={locale} version={release.version} downloadUrl={release.pageUrl}>
+<Base locale={locale} release={release} screenshots={screenshots} faq={t.faq.items}>
   <Nav locale={locale} />
   <main>
     <Hero locale={locale} release={release} />
@@ -36,6 +58,7 @@ const release = await getRelease();
     <LibrarySection locale={locale} />
     <Gallery locale={locale} />
     <Shortcuts locale={locale} />
+    <Faq locale={locale} />
     <Download locale={locale} release={release} />
     <OpenSource locale={locale} />
   </main>

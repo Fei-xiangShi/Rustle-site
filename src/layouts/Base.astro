@@ -1,78 +1,196 @@
 ---
 import '~/styles/global.css';
 import { Font } from 'astro:assets';
-import { GITHUB_URL, SITE } from '~/config/site';
-import { getDict, type Locale } from '~/i18n';
+import { AUTHOR, GITHUB_URL, LICENSE_URL, SITE, VERIFICATION } from '~/config/site';
+import { getDict, homePath, type Locale } from '~/i18n';
+import type { ReleaseInfo } from '~/lib/release';
+
+export interface Screenshot {
+  url: string;
+  caption: string;
+  width: number;
+  height: number;
+}
 
 interface Props {
   locale: Locale;
   title?: string;
   description?: string;
-  version?: string;
-  downloadUrl?: string;
+  release?: ReleaseInfo;
+  screenshots?: Screenshot[];
+  faq?: { q: string; a: string }[];
   noindex?: boolean;
 }
 
-const { locale, title, description, version, downloadUrl, noindex = false } = Astro.props;
+const { locale, title, description, release, screenshots = [], faq = [], noindex = false } = Astro.props;
 const t = getDict(locale);
 const pageTitle = title ?? t.meta.title;
 const desc = description ?? t.meta.description;
 const site = Astro.site ?? new URL('https://rustle.fxs.life');
 const canonical = new URL(Astro.url.pathname, site);
-const zhUrl = new URL('/', site);
-const enUrl = new URL('/en/', site);
-const ogImage = new URL('/og.png', site);
+const zhUrl = new URL(homePath('zh'), site);
+const enUrl = new URL(homePath('en'), site);
+const ogImage = new URL(locale === 'zh' ? '/og.png' : '/og-en.png', site);
+const ogLocale = locale === 'zh' ? 'zh_CN' : 'en_US';
+const ogLocaleAlt = locale === 'zh' ? 'en_US' : 'zh_CN';
+const robots = noindex
+  ? 'noindex, follow'
+  : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
+const verification = Object.entries(VERIFICATION).filter((entry): entry is [string, string] => Boolean(entry[1]));
 
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  name: SITE.name,
-  description: desc,
-  url: canonical.href,
-  image: ogImage.href,
-  applicationCategory: 'MultimediaApplication',
-  operatingSystem: 'Windows, macOS, Linux',
-  ...(version ? { softwareVersion: version } : {}),
-  ...(downloadUrl ? { downloadUrl } : {}),
-  license: 'https://www.gnu.org/licenses/agpl-3.0.html',
-  codeRepository: GITHUB_URL,
-  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-};
+const id = (fragment: string, base: URL = zhUrl) => `${base.href}#${fragment}`;
+const featureList = [
+  ...t.lyrics.points.map((p) => p.title),
+  t.bento.flow.title,
+  ...t.audio.features.map((f) => f.title),
+  t.library.cloud.title,
+  t.library.local.title,
+  t.library.formats.title,
+  t.bento.system.title,
+];
+
+const graph: Record<string, unknown>[] = [
+  {
+    '@type': 'WebSite',
+    '@id': id('website'),
+    url: zhUrl.href,
+    name: SITE.name,
+    alternateName: [t.meta.siteName],
+    description: desc,
+    inLanguage: ['zh-CN', 'en'],
+    publisher: { '@id': id('author') },
+  },
+  {
+    '@type': 'Person',
+    '@id': id('author'),
+    name: AUTHOR.name,
+    url: AUTHOR.url,
+  },
+  ...(noindex
+    ? []
+    : [
+        {
+          '@type': 'SoftwareApplication',
+          '@id': id('app'),
+          name: SITE.name,
+          description: desc,
+          url: canonical.href,
+          image: ogImage.href,
+          ...(screenshots.length
+            ? {
+                screenshot: screenshots.map((s) => ({
+                  '@type': 'ImageObject',
+                  url: s.url,
+                  caption: s.caption,
+                  width: s.width,
+                  height: s.height,
+                })),
+              }
+            : {}),
+          applicationCategory: 'MultimediaApplication',
+          applicationSubCategory: locale === 'zh' ? '音乐播放器' : 'Music player',
+          operatingSystem: 'Windows, macOS 10.13+, Linux',
+          featureList,
+          inLanguage: ['zh-CN', 'en'],
+          isAccessibleForFree: true,
+          license: LICENSE_URL,
+          author: { '@id': id('author') },
+          publisher: { '@id': id('author') },
+          sameAs: [GITHUB_URL],
+          offers: { '@type': 'Offer', price: '0', priceCurrency: 'CNY', availability: 'https://schema.org/InStock' },
+          ...(release
+            ? {
+                softwareVersion: release.version,
+                releaseNotes: release.pageUrl,
+                ...(release.publishedAt ? { dateModified: release.publishedAt } : {}),
+                downloadUrl: [...new Set(Object.values(release.assets).map((a) => a.url))],
+                installUrl: new URL('#download', canonical).href,
+              }
+            : {}),
+        },
+        {
+          '@type': 'WebPage',
+          '@id': id('webpage', canonical),
+          url: canonical.href,
+          name: pageTitle,
+          description: desc,
+          inLanguage: t.lang,
+          isPartOf: { '@id': id('website') },
+          about: { '@id': id('app') },
+          primaryImageOfPage: { '@type': 'ImageObject', url: ogImage.href, width: 1200, height: 630 },
+        },
+      ]),
+  ...(faq.length
+    ? [
+        {
+          '@type': 'FAQPage',
+          '@id': id('faq', canonical),
+          inLanguage: t.lang,
+          mainEntity: faq.map((item) => ({
+            '@type': 'Question',
+            name: item.q,
+            acceptedAnswer: { '@type': 'Answer', text: item.a },
+          })),
+        },
+      ]
+    : []),
+];
+const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
 ---
 
 <!doctype html>
-<html lang={t.lang}>
+<html lang={t.lang} dir="ltr">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{pageTitle}</title>
     <meta name="description" content={desc} />
-    {noindex && <meta name="robots" content="noindex" />}
+    <meta name="keywords" content={t.meta.keywords} />
+    <meta name="author" content={AUTHOR.name} />
+    <meta name="robots" content={robots} />
     <link rel="canonical" href={canonical} />
     <link rel="alternate" hreflang="zh-CN" href={zhUrl} />
+    <link rel="alternate" hreflang="zh" href={zhUrl} />
     <link rel="alternate" hreflang="en" href={enUrl} />
     <link rel="alternate" hreflang="x-default" href={zhUrl} />
+    <link rel="sitemap" type="application/xml" href="/sitemap-index.xml" />
+    <link rel="alternate" type="application/atom+xml" title="Rustle releases" href={`${GITHUB_URL}/releases.atom`} />
+
+    <!-- Baidu: keep pages untranscoded and mark them as responsive. -->
+    <meta http-equiv="Cache-Control" content="no-transform" />
+    <meta http-equiv="Cache-Control" content="no-siteapp" />
+    <meta name="applicable-device" content="pc,mobile" />
+    <meta name="renderer" content="webkit" />
+    <meta name="format-detection" content="telephone=no" />
+    {verification.map(([name, content]) => <meta name={name} content={content} />)}
 
     <meta name="theme-color" content="#0b0807" />
     <meta name="color-scheme" content="dark" />
+    <meta name="application-name" content={SITE.name} />
+    <meta name="apple-mobile-web-app-title" content={SITE.name} />
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
 
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:site_name" content={t.meta.siteName} />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={desc} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:secure_url" content={ogImage} />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:locale" content={locale === 'zh' ? 'zh_CN' : 'en_US'} />
+    <meta property="og:image:alt" content={t.meta.ogImageAlt} />
+    <meta property="og:locale" content={ogLocale} />
+    <meta property="og:locale:alternate" content={ogLocaleAlt} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={desc} />
     <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content={t.meta.ogImageAlt} />
 
     <Font cssVariable="--font-instrument" preload={[{ subset: 'latin', style: 'normal' }]} />
     <Font cssVariable="--font-geist" preload={[{ subset: 'latin' }]} />

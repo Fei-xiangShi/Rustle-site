@@ -1,6 +1,7 @@
-// Regenerates site imagery from the Rustle repository.
+// Regenerates site imagery: icons from the Rustle repository, Open Graph cards
+// from the app screenshots in src/assets/screenshots, and demo album covers.
 // Usage: node scripts/generate-assets.mjs [path-to-rustle-repo]
-import { copyFile, mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,7 +10,6 @@ import sharp from 'sharp';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repo = path.resolve(process.argv[2] ?? path.join(root, '../../Rust/Rustle'));
 const iconSrc = path.join(repo, 'assets/icons/icon.png');
-const shotsSrc = path.join(repo, 'assets/screenshots');
 
 if (!existsSync(iconSrc)) {
   console.error(`Rustle icon not found at ${iconSrc}`);
@@ -18,16 +18,10 @@ if (!existsSync(iconSrc)) {
 
 const assetsDir = path.join(root, 'src/assets');
 const publicDir = path.join(root, 'public');
-await mkdir(path.join(assetsDir, 'screenshots'), { recursive: true });
 await mkdir(publicDir, { recursive: true });
 
 // Source icon for <Image>; 1024px is plenty for every rendered size.
 await sharp(iconSrc).resize(1024, 1024).png({ compressionLevel: 9 }).toFile(path.join(assetsDir, 'icon.png'));
-
-for (const name of ['lyrics_page', 'playlist', 'settings_page']) {
-  const src = path.join(shotsSrc, `${name}.png`);
-  if (existsSync(src)) await copyFile(src, path.join(assetsDir, 'screenshots', `${name}.png`));
-}
 
 const png = (size) => sharp(iconSrc).resize(size, size).png({ compressionLevel: 9 }).toBuffer();
 await writeFile(path.join(publicDir, 'favicon-32.png'), await png(32));
@@ -54,7 +48,7 @@ frames.forEach(({ size, data }, i) => {
 });
 await writeFile(path.join(publicDir, 'favicon.ico'), Buffer.concat([header, ...frames.map((f) => f.data)]));
 
-// Open Graph card: warm gradient, icon, and the lyrics page screenshot.
+// Open Graph cards (zh + en): warm gradient, icon, tagline and the lyrics view.
 const W = 1200;
 const H = 630;
 const background = Buffer.from(`
@@ -66,7 +60,7 @@ const background = Buffer.from(`
       <stop offset="1" stop-color="#0b0807"/>
     </radialGradient>
     <radialGradient id="b" cx="95%" cy="100%" r="60%">
-      <stop offset="0" stop-color="#7a1f3d" stop-opacity="0.75"/>
+      <stop offset="0" stop-color="#5b2a86" stop-opacity="0.7"/>
       <stop offset="1" stop-color="#0b0807" stop-opacity="0"/>
     </radialGradient>
   </defs>
@@ -75,15 +69,13 @@ const background = Buffer.from(`
 </svg>`);
 
 const shotW = 760;
-const shotH = Math.round((1028 / 1908) * shotW);
+const shotH = Math.round((1350 / 2400) * shotW);
 const radius = 18;
-const shot = await sharp(path.join(shotsSrc, 'lyrics_page.png'))
+const shot = await sharp(path.join(assetsDir, 'screenshots', 'lyrics.png'))
   .resize(shotW, shotH)
   .composite([
     {
-      input: Buffer.from(
-        `<svg width="${shotW}" height="${shotH}"><rect width="${shotW}" height="${shotH}" rx="${radius}" ry="${radius}"/></svg>`,
-      ),
+      input: Buffer.from(`<svg width="${shotW}" height="${shotH}"><rect width="${shotW}" height="${shotH}" rx="${radius}" ry="${radius}"/></svg>`),
       blend: 'dest-in',
     },
   ])
@@ -105,26 +97,72 @@ const shadow = await sharp({
   .png()
   .toBuffer();
 const icon = await png(132);
-const text = Buffer.from(`
+
+const cards = {
+  'og.png': ['会呼吸的歌词，原生的速度。', '开源免费的网易云音乐第三方桌面播放器', 30],
+  'og-en.png': ['Lyrics that breathe. Native speed.', 'Open-source desktop music player', 25],
+};
+for (const [file, [tagline, sub, size]] of Object.entries(cards)) {
+  const text = Buffer.from(`
 <svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">
   <style>
     .t { font-family: 'Georgia', 'Times New Roman', serif; fill: #f6efe7; }
-    .s { font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', sans-serif; fill: #f6efe7; }
+    .s { font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', 'Segoe UI', sans-serif; fill: #f6efe7; }
   </style>
   <text x="72" y="316" class="t" font-size="84">Rustle</text>
-  <text x="74" y="378" class="s" font-size="30" fill-opacity="0.92">会呼吸的歌词，原生的速度。</text>
-  <text x="74" y="424" class="s" font-size="20" fill-opacity="0.6">纯 Rust · GPU 渲染的桌面音乐播放器</text>
+  <text x="74" y="378" class="s" font-size="${size}" fill-opacity="0.92">${tagline}</text>
+  <text x="74" y="424" class="s" font-size="20" fill-opacity="0.6">${sub}</text>
   <text x="74" y="560" class="s" font-size="18" fill-opacity="0.5">Windows · macOS · Linux</text>
 </svg>`);
+  await sharp(background)
+    .composite([
+      { input: shadow, left: 520 - 60, top: 168 - 70 },
+      { input: shot, left: 520, top: 168 },
+      { input: icon, left: 66, top: 92 },
+      { input: text, left: 0, top: 0 },
+    ])
+    .png({ compressionLevel: 9 })
+    .toFile(path.join(publicDir, file));
+}
 
-await sharp(background)
-  .composite([
-    { input: shadow, left: 520 - 60, top: 150 - 70 },
-    { input: shot, left: 520, top: 150 },
-    { input: icon, left: 66, top: 92 },
-    { input: text, left: 0, top: 0 },
-  ])
-  .png({ compressionLevel: 9 })
-  .toFile(path.join(publicDir, 'og.png'));
+// Demo album covers for the AMLL lyrics player (its background samples them).
+await mkdir(path.join(assetsDir, 'covers'), { recursive: true });
+// Crop inside the squircle so the cover is full-bleed.
+const iconSize = (await sharp(iconSrc).metadata()).width ?? 2048;
+const inset = Math.round(iconSize * 0.19);
+await sharp(iconSrc)
+  .flatten({ background: '#d27c3c' })
+  .extract({ left: inset, top: inset, width: iconSize - inset * 2, height: iconSize - inset * 2 })
+  .resize(640, 640)
+  .jpeg({ quality: 88, mozjpeg: true })
+  .toFile(path.join(assetsDir, 'covers', 'leaves-in-motion.jpg'));
+await sharp(
+  Buffer.from(`
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#081a2b"/>
+      <stop offset="0.5" stop-color="#14506a"/>
+      <stop offset="1" stop-color="#5fb3c4"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#f4ead6" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#f4ead6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#06121f" stop-opacity="0"/>
+      <stop offset="1" stop-color="#06121f"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="640" fill="url(#sky)"/>
+  <circle cx="440" cy="190" r="170" fill="url(#glow)"/>
+  <circle cx="440" cy="190" r="84" fill="#f4ead6"/>
+  <rect y="370" width="640" height="270" fill="url(#ground)"/>
+  <rect x="52" y="532" width="536" height="1.5" fill="#ffffff" fill-opacity="0.35"/>
+  <text x="52" y="598" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="52" fill="#ffffff" fill-opacity="0.92">Blue Hour</text>
+</svg>`),
+)
+  .jpeg({ quality: 88, mozjpeg: true })
+  .toFile(path.join(assetsDir, 'covers', 'blue-hour.jpg'));
 
 console.log('Assets generated from', repo);

@@ -123,6 +123,19 @@ function flowCard(): void {
   if (!root || !canvas) return;
   const swatches = [...root.querySelectorAll<HTMLButtonElement>('[data-palette]')];
   const palettes = swatches.map((s) => JSON.parse(s.dataset.palette!) as string[]);
+  // Only pay for a WebGL context once the card is about to be seen.
+  const io = new IntersectionObserver(
+    ([entry]) => {
+      if (!entry.isIntersecting) return;
+      io.disconnect();
+      startFlow(canvas, swatches, palettes);
+    },
+    { rootMargin: '600px 0px' },
+  );
+  io.observe(root);
+}
+
+function startFlow(canvas: HTMLCanvasElement, swatches: HTMLButtonElement[], palettes: string[][]): void {
   const mesh = MeshGradient.create(canvas, palettes[0], { speed: 1.1, resolution: 0.35 });
   if (!mesh) return;
   let index = 0;

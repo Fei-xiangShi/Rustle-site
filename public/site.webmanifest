@@ -1,11 +1,35 @@
 {
-  "name": "Rustle",
+  "id": "/",
+  "name": "Rustle — 会呼吸的歌词，原生的速度",
   "short_name": "Rustle",
+  "description": "纯 Rust 打造、GPU 渲染的开源桌面音乐播放器：逐字歌词、10 段均衡器与 Automix，网易云音乐与本地曲库一处聆听。",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "categories": [
+    "music",
+    "entertainment",
+    "utilities"
+  ],
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ],
   "theme_color": "#0b0807",
-  "background_color": "#0b0807",
-  "display": "standalone"
+  "background_color": "#0b0807"
 }

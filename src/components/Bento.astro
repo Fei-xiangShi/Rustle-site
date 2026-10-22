@@ -22,10 +22,10 @@ const coverStyle = (c: string[]) =>
 const osIcons: Record<string, string> = { Windows: 'windows-logo', macOS: 'apple-logo', Linux: 'linux-logo' };
 ---
 
-<section id="features" class="container-x py-24 md:py-32">
+<section id="features" aria-labelledby="features-title" class="container-x py-24 md:py-32">
   <div class="max-w-3xl">
     <p data-reveal class="kicker">{b.kicker}</p>
-    <h2 data-reveal class="section-title mt-6"><Phrases text={b.title} /></h2>
+    <h2 id="features-title" data-reveal class="section-title mt-6"><Phrases text={b.title} /></h2>
   </div>
 
   <div class="mt-14 grid grid-cols-1 gap-4 md:grid-cols-6 lg:grid-cols-12 lg:gap-5">

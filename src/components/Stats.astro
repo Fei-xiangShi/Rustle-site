@@ -22,7 +22,7 @@ const t = getDict(Astro.props.locale);
         >
           <dt class="order-2 text-[0.82rem] text-faint">{s.label}</dt>
           <dd class="order-1 font-sans text-[clamp(2.4rem,4.2vw,3.5rem)] leading-none font-extralight tracking-[-0.045em] tabular-nums">
-            <span data-count={s.value}>{s.value}</span>
+            {s.value}
           </dd>
         </div>
       ))

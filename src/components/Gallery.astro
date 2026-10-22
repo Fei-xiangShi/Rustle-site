@@ -1,8 +1,7 @@
 ---
 import { Picture } from 'astro:assets';
-import lyrics from '~/assets/screenshots/lyrics_page.png';
-import playlist from '~/assets/screenshots/playlist.png';
-import settings from '~/assets/screenshots/settings_page.png';
+import audio from '~/assets/screenshots/audio-engine.png';
+import home from '~/assets/screenshots/home.png';
 import { getDict, type Locale } from '~/i18n';
 import Phrases from './Phrases.astro';
 
@@ -12,15 +11,15 @@ interface Props {
 
 const t = getDict(Astro.props.locale);
 const g = t.gallery;
-const images = { lyrics, playlist, settings } as const;
+const images = { home, audio } as const;
 ---
 
-<section class="container-x py-24 md:py-32">
+<section id="screens" aria-labelledby="screens-title" class="container-x py-24 md:py-32">
   <div data-tabs>
     <div class="flex flex-wrap items-end justify-between gap-8">
       <div class="max-w-3xl">
         <p data-reveal class="kicker">{g.kicker}</p>
-        <h2 data-reveal class="section-title mt-6"><Phrases text={g.title} /></h2>
+        <h2 id="screens-title" data-reveal class="section-title mt-6"><Phrases text={g.title} /></h2>
       </div>
       <div data-reveal role="tablist" aria-label={g.kicker} class="inline-flex rounded-full bg-white/[0.04] p-1 ring-1 ring-white/[0.08]">
         {
@@ -46,7 +45,7 @@ const images = { lyrics, playlist, settings } as const;
       <div class="frame relative grid overflow-hidden rounded-[clamp(0.75rem,1.6vw,1.4rem)] bg-ink-900 shadow-[0_40px_100px_-30px_rgb(0_0_0/0.8),0_0_0_1px_rgb(255_240_225/0.1)]">
         {
           g.tabs.map((tab, i) => (
-            <figure
+            <div
               role="tabpanel"
               id={`shot-panel-${tab.key}`}
               aria-labelledby={`shot-tab-${tab.key}`}
@@ -56,13 +55,12 @@ const images = { lyrics, playlist, settings } as const;
               <Picture
                 src={images[tab.key as keyof typeof images]}
                 formats={['avif', 'webp']}
-                widths={[640, 960, 1280, 1600, 1908]}
+                widths={[640, 960, 1280, 1600, 2000, 2400]}
                 sizes="(min-width: 1280px) 1200px, 92vw"
-                alt={tab.caption}
+                alt={tab.alt}
                 class="block h-auto w-full"
               />
-              <figcaption class="sr-only">{tab.caption}</figcaption>
-            </figure>
+            </div>
           ))
         }
       </div>
@@ -119,9 +117,8 @@ const images = { lyrics, playlist, settings } as const;
     opacity: 0;
     transition: opacity 0.5s ease;
   }
-  [data-tabs]:has(#shot-panel-lyrics[data-active]) .caption[data-for='lyrics'],
-  [data-tabs]:has(#shot-panel-playlist[data-active]) .caption[data-for='playlist'],
-  [data-tabs]:has(#shot-panel-settings[data-active]) .caption[data-for='settings'] {
+  [data-tabs]:has(#shot-panel-home[data-active]) .caption[data-for='home'],
+  [data-tabs]:has(#shot-panel-audio[data-active]) .caption[data-for='audio'] {
     opacity: 1;
   }
 </style>

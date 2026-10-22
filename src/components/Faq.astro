@@ -1,0 +1,65 @@
+---
+import { getDict, type Locale } from '~/i18n';
+import Icon from './Icon.astro';
+import Phrases from './Phrases.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const f = getDict(Astro.props.locale).faq;
+---
+
+<section id="faq" aria-labelledby="faq-title" class="container-x py-24 md:py-32">
+  <div class="grid gap-14 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+    <div class="lg:sticky lg:top-28 lg:self-start">
+      <p data-reveal class="kicker">{f.kicker}</p>
+      <h2 id="faq-title" data-reveal class="section-title mt-6"><Phrases text={f.title} /></h2>
+    </div>
+
+    <div class="border-t hairline">
+      {
+        f.items.map((item, i) => (
+          <details data-reveal name="faq" class="faq group border-b hairline" open={i === 0}>
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-6 py-6 text-left">
+              <h3 class="text-[1.05rem] font-medium md:text-lg">{item.q}</h3>
+              <span class="faq-icon inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-white/[0.05] text-soft ring-1 ring-white/[0.08]">
+                <Icon name="plus" size={14} />
+              </span>
+            </summary>
+            <p class="faq-answer max-w-2xl pb-7 leading-relaxed text-soft">{item.a}</p>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .faq summary::-webkit-details-marker {
+    display: none;
+  }
+  .faq-icon {
+    transition:
+      transform 0.5s var(--ease-out-expo),
+      background-color 0.3s ease,
+      color 0.3s ease;
+  }
+  .faq[open] .faq-icon {
+    transform: rotate(45deg);
+    color: var(--color-ink-950);
+    background: var(--color-paper);
+  }
+  .faq summary:hover .faq-icon {
+    color: var(--color-paper);
+  }
+  .faq[open] .faq-answer {
+    animation: faq-in 0.6s var(--ease-out-expo);
+  }
+  @keyframes faq-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+  }
+</style>

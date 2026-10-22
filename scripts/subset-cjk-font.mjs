@@ -1,23 +1,60 @@
-// Builds a Noto Serif SC subset containing only the CJK characters used in the
-// site copy, so Chinese headings cost one small woff2 instead of dozens of
-// unicode-range slices. Runs before every build; if Google Fonts is unreachable
-// the previously generated file is kept.
+// Builds a Noto Serif SC subset containing only the CJK characters that are set
+// in the display face (hero, section titles, manifesto…), so Chinese headings
+// cost one small woff2 instead of dozens of unicode-range slices. Runs before
+// every build; if Google Fonts is unreachable the previous file is kept.
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const sources = ['src/i18n/zh.ts', 'src/i18n/en.ts'];
 const outDir = path.join(root, 'src/assets/fonts');
 const fontFile = path.join(outDir, 'noto-serif-sc-subset.woff2');
 const charsFile = path.join(outDir, 'noto-serif-sc-subset.txt');
 const FAMILY = 'Noto Serif SC:wght@500';
-// CJK punctuation, unified ideographs and full-width forms.
+// CJK punctuation, unified ideographs and full-width forms (matches the
+// unicode-range declared in astro.config.mjs).
 const CJK = /[　-〿一-鿿＀-￯]/gu;
 
-const text = (await Promise.all(sources.map((f) => readFile(path.join(root, f), 'utf8')))).join('');
-const chars = [...new Set(text.match(CJK) ?? [])].sort().join('');
+/** Every string rendered with `font-display` / `.section-title`. */
+function displayStrings(d) {
+  return [
+    ...d.hero.titleLines,
+    d.manifesto,
+    d.nav.lyrics,
+    d.nav.features,
+    d.nav.audio,
+    d.nav.library,
+    d.nav.download,
+    d.lyrics.title,
+    d.bento.title,
+    d.bento.flow.title,
+    d.audio.title,
+    d.library.title,
+    d.gallery.title,
+    d.shortcuts.title,
+    d.faq.title,
+    d.download.title,
+    d.source.title,
+    d.notFound.title,
+  ];
+}
+
+async function sourceText() {
+  try {
+    // Node strips TypeScript types natively (22.18+ / 23.6+).
+    const dicts = await Promise.all(
+      ['zh', 'en'].map((n) => import(pathToFileURL(path.join(root, `src/i18n/${n}.ts`)).href).then((m) => m.default)),
+    );
+    return dicts.flatMap(displayStrings).join('');
+  } catch (error) {
+    console.warn('[cjk-font] cannot import dictionaries, subsetting all copy instead:', error.message);
+    const files = ['src/i18n/zh.ts', 'src/i18n/en.ts'];
+    return (await Promise.all(files.map((f) => readFile(path.join(root, f), 'utf8')))).join('');
+  }
+}
+
+const chars = [...new Set((await sourceText()).match(CJK) ?? [])].sort().join('');
 
 if (existsSync(fontFile) && existsSync(charsFile) && (await readFile(charsFile, 'utf8')) === chars) {
   console.log(`[cjk-font] up to date (${chars.length} glyphs)`);

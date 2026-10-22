@@ -48,12 +48,12 @@ const packages = [
 ];
 ---
 
-<section id="download" class="relative overflow-hidden py-24 md:py-36">
+<section id="download" aria-labelledby="download-title" class="relative overflow-hidden py-24 md:py-36">
   <div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-full bg-[radial-gradient(60%_45%_at_50%_0%,rgb(224_100_60/0.16),transparent_70%)]" aria-hidden="true"></div>
   <div class="container-x">
     <div class="mx-auto max-w-2xl text-center">
       <p data-reveal class="kicker">{d.kicker}</p>
-      <h2 data-reveal class="section-title mt-6"><Phrases text={d.title} /></h2>
+      <h2 id="download-title" data-reveal class="section-title mt-6"><Phrases text={d.title} /></h2>
       <p data-reveal class="mt-6 text-lg text-soft">{d.body}</p>
       <p data-reveal class="mt-6 inline-flex items-center gap-2 rounded-full bg-white/[0.04] px-4 py-1.5 font-mono text-xs text-soft ring-1 ring-white/[0.08]">
         <span class="size-1.5 rounded-full bg-[#7ee2a8] shadow-[0_0_10px_2px_rgb(126_226_168/0.6)]"></span>

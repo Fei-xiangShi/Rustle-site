@@ -360,7 +360,10 @@ export function mountAudioEngine(root: HTMLElement): void {
   }).observe(root);
   document.addEventListener('visibilitychange', () => kick());
 
-  allocate(Math.max(48, Math.min(128, Math.floor(canvas.clientWidth / 7))));
+  // No layout reads or frames at mount; the ResizeObserver and the in-view
+  // observer take over once the panel is actually on screen.
+  allocate(128);
+  gains = [...EQ_PRESETS.pop];
+  selectPreset('pop');
   paintEq();
-  applyPreset('pop');
 }
